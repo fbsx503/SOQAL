@@ -21,31 +21,36 @@ def accuracy_full_system(AI, dataset):
     for article in dataset:
         for paragraph in article['paragraphs']:
             for qa in paragraph['qas']:
+                response = AI.ask(qa['question'])
+                question_no = question_no + 1
+                exact_match_max_1 = 0
+                f1_max_1 = 0
+                f1_max_3 = 0
+                exact_match_max_3 = 0
+                f1_max_5 = 0
+                exact_match_max_5 = 0
                 for answer in qa['answers']:
                     print("Question number is: " + str(question_no))
-                    question_no = question_no + 1
                     print("Question is: " + qa['question'])
-                    response = AI.ask(qa['question'])
                     print("result is: " + str(response))
                     print("ground truth is: " + str(answer['text']))
-                    f1_max_3 = 0
-                    exact_match_max_3 = 0
-                    f1_max_5 = 0
-                    exact_match_max_5 = 0
                     for i in range(len(response)):
                         if i < 1:
-                            exact_match_1 += exact_match_score(response[i], answer['text'])
-                            f1_1 += f1_score(response[i], answer['text'])
+                            exact_match_max_1 = max(exact_match_max_1, exact_match_score(response[i], answer['text']))
+                            f1_max_1 = max(f1_max_1, f1_score(response[i], answer['text']))
                         if i < 3:
                             exact_match_max_3 = max(exact_match_max_3, exact_match_score(response[i], answer['text']))
                             f1_max_3 = max(f1_max_3, f1_score(response[i], answer['text']))
                         if i < 5:
                             exact_match_max_5 = max(exact_match_max_5, exact_match_score(response[i], answer['text']))
                             f1_max_5 = max(f1_max_5, f1_score(response[i], answer['text']))
-                    exact_match_3 += exact_match_max_3
-                    f1_3 += f1_max_3
-                    exact_match_5 += exact_match_max_5
-                    f1_5 += f1_max_5
+
+                exact_match_1 += exact_match_max_1
+                f1_1 += f1_max_1
+                exact_match_3 += exact_match_max_3
+                f1_3 += f1_max_3
+                exact_match_5 += exact_match_max_5
+                f1_5 += f1_max_5
     print("exact match score 1 = " + str(exact_match_1 / question_no))
     print("exact match score 3 = " + str(exact_match_3 / question_no))
     print("exact match score 5 = " + str(exact_match_5 / question_no))
