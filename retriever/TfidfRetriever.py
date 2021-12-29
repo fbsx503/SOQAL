@@ -142,7 +142,7 @@ class TfidfRetriever_sys:
 
 
 class HierarchicalTfidf:
-    def __init__(self, base_retriever, k1 , k2):
+    def __init__(self, base_retriever, k1, k2):
         self.r = base_retriever
         self.r.k = k1
         self.k = k2

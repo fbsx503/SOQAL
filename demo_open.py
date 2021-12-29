@@ -14,9 +14,7 @@ import sys
 import pickle
 import json
 sys.path.append(os.path.abspath("retriever"))
-from retriever.GoogleSearchRetriever import ApiGoogleSearchRetriever
 from retriever.TfidfRetriever import HierarchicalTfidf
-from retriever.TfidfRetriever import TfidfRetriever
 sys.path.append(os.path.abspath("bert"))
 from bert.Bert_model import BERT_model
 '''
@@ -73,6 +71,7 @@ class Demo(object):
         except KeyboardInterrupt:
             print("Closing server...")
             self.close_thread = False
+
     def demo_backend(self):
         global query, response
         while self.close_thread:
@@ -95,6 +94,7 @@ def main():
     ret = HierarchicalTfidf(base_r, 50, 50)
     red = BERT_model(args.config, args.vocab, args.output)
     AI = SOQAL(ret, red, 0.999)
+    print(AI)
     demo = Demo(AI, None)
 
 if __name__ == "__main__":

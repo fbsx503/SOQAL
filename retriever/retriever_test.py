@@ -1,13 +1,9 @@
 import json
 import random
 import pickle
-from WikipediaRetriever import WikipediaRetriever
-from GoogleSearchRetriever import ApiGoogleSearchRetriever
 from TfidfRetriever import TfidfRetriever, HierarchicalTfidf
 import sys,os
 sys.path.append(os.path.abspath("../embedding"))
-from fasttext_embedding import fastTextEmbedder
-from EmbeddingRetriever import EmbeddingRetriever
 import time
 import argparse
 parser = argparse.ArgumentParser()
