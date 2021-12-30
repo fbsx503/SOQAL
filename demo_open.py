@@ -13,10 +13,13 @@ from time import sleep
 import sys
 import pickle
 import json
+
 sys.path.append(os.path.abspath("retriever"))
 from retriever.TfidfRetriever import *
+
 sys.path.append(os.path.abspath("bert"))
 from bert.Bert_model import BERT_model
+
 '''
 This file is taken and modified from R-Net by Minsangkim142
 https://github.com/minsangkim142/R-net
@@ -29,15 +32,18 @@ my_module = os.path.abspath(__file__)
 parent_dir = os.path.dirname(my_module)
 static_dir = os.path.join(parent_dir, 'static')
 
+
 @app.get("/")
 def home():
     with open('demo_open.html', encoding='utf-8') as fl:
         html = fl.read()
         return html
 
+
 @app.get('/static/<filename>')
 def server_static(filename):
     return static_file(filename, root=static_dir)
+
 
 @app.post('/answer')
 def answer():
@@ -53,9 +59,10 @@ def answer():
     else:
         response = "Please write a question"
     print("received response: {}".format(response))
-    response_ = {"answer": response} 
+    response_ = {"answer": response}
     response = []
     return response_
+
 
 class Demo(object):
     def __init__(self, model, config):
@@ -80,11 +87,10 @@ class Demo(object):
                 response = self.model.ask_araelectra(query)
                 query = []
 
-import  argparse
+
+import argparse
+
 parser = argparse.ArgumentParser()
-parser.add_argument('-c', '--config', help='Path to bert_config.json', required=True)
-parser.add_argument('-v', '--vocab', help='Path to vocab.txt', required=True)
-parser.add_argument('-o', '--output', help='Directory of model outputs', required=True)
 parser.add_argument('-r', '--ret-path', help='Retriever Path', required=True)
 
 
@@ -97,6 +103,7 @@ def main():
     AI = SOQAL(ret, red, 0.999)
     print(AI)
     demo = Demo(AI, None)
+
 
 if __name__ == "__main__":
     main()

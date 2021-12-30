@@ -3,10 +3,12 @@ import sys
 import pickle
 import json
 
+
 def softmax(x):
     """Compute softmax values for each sets of scores in x."""
     e_x = np.exp(x - np.max(x))
     return e_x / e_x.sum()
+
 
 class SOQAL:
     def __init__(self, retriever, reader, beta):
@@ -21,7 +23,7 @@ class SOQAL:
         for doc in docs:
             paragraph_context = doc
             qas = []
-            id =  str(id_i)
+            id = str(id_i)
             ques = quest
             ans = ""
             answer_start = 0
@@ -57,10 +59,10 @@ class SOQAL:
     def get_predictions(self, predictions_raw):
         answers_text = []
         answers_scores = []
-        for i in range(0,len(predictions_raw)):
+        for i in range(0, len(predictions_raw)):
             doc_ques_id = str(i)
             # pick the first as the highest, better to pick all
-            for j in range(0,min(1,len(predictions_raw))):
+            for j in range(0, min(1, len(predictions_raw))):
                 pred = predictions_raw[doc_ques_id][j]
                 pred_score = pred['start_logit'] * pred['end_logit']
                 pred_answer = pred['text']
@@ -68,14 +70,13 @@ class SOQAL:
                 answers_scores.append(pred_score)
         return answers_text, answers_scores
 
-
     def agreggate(self, answers_text, answers_scores, docs_scores):
         ans_scores = np.asarray(answers_scores)
         doc_scores = np.asarray(docs_scores)
-        final_scores = (1-self.beta) * softmax(ans_scores) + self.beta * softmax(doc_scores)
+        final_scores = (1 - self.beta) * softmax(ans_scores) + self.beta * softmax(doc_scores)
         ans_indx = np.argsort(final_scores)[::-1]
         pred = []
-        for k in range(0, min(5,len(ans_indx))):
+        for k in range(0, min(5, len(ans_indx))):
             pred.append(answers_text[ans_indx[k]])
         return pred
 
@@ -87,7 +88,7 @@ class SOQAL:
         nbest = self.reader.predict_batch(dataset)
         print("got predictions from BERT")
         answers, answers_scores = self.get_predictions(nbest)
-        prediction = self.agreggate(answers,answers_scores,doc_scores)
+        prediction = self.agreggate(answers, answers_scores, doc_scores)
         return prediction
 
     def ask_araelectra(self, quest):
@@ -95,6 +96,13 @@ class SOQAL:
         print("got documents")
         dataset = self.build_quest_json_araElectra(docs)
         print("built documents json")
-        result = self.reader.answerQuestion(question=[quest] * len(dataset), context=dataset)
-        print("araElectraResults is " + str(result))
-        return ["","","","",""]
+        total_result = []
+        for question in dataset:
+            total_result.append(self.reader.answerQuestion(question=self.reader.preprocess(quest),
+                                                           context=self.reader.preprocess(question)))
+
+        result = sorted(total_result, key=lambda object1: object1["score"], reverse=True)
+        answers = []
+        for i in range(0, 5):
+            answers.append(result[i]["answer"])
+        return answers
