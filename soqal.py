@@ -48,6 +48,11 @@ class SOQAL:
         articles.append(article)
         return articles
 
+    def build_quest_json_araElectra(self, docs):
+        paragraph = []
+        for doc in docs:
+            paragraph.append(doc)
+        return paragraph
 
     def get_predictions(self, predictions_raw):
         answers_text = []
@@ -84,3 +89,12 @@ class SOQAL:
         answers, answers_scores = self.get_predictions(nbest)
         prediction = self.agreggate(answers,answers_scores,doc_scores)
         return prediction
+
+    def ask_araelectra(self, quest):
+        docs, doc_scores = self.retriever.get_topk_docs_scores(quest)
+        print("got documents")
+        dataset = self.build_quest_json_araElectra(docs)
+        print("built documents json")
+        result = self.reader.answerQuestion(question=[quest] * len(dataset), context=dataset)
+        print("araElectraResults is " + str(result))
+        return ["","","","",""]

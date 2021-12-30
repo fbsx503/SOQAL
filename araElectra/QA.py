@@ -1,4 +1,4 @@
-from preprocess import ArabertPreprocessor
+from .preprocess import ArabertPreprocessor
 from transformers import pipeline
 
 

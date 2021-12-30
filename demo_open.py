@@ -14,7 +14,7 @@ import sys
 import pickle
 import json
 sys.path.append(os.path.abspath("retriever"))
-from retriever.TfidfRetriever import HierarchicalTfidf
+from retriever.TfidfRetriever import *
 sys.path.append(os.path.abspath("bert"))
 from bert.Bert_model import BERT_model
 '''
@@ -77,7 +77,7 @@ class Demo(object):
         while self.close_thread:
             sleep(0.1)
             if query:
-                response = self.model.ask(query)
+                response = self.model.ask_araelectra(query)
                 query = []
 
 import  argparse
@@ -92,7 +92,8 @@ def main():
     args = parser.parse_args()
     base_r = pickle.load(open(args.ret_path, "rb"))
     ret = HierarchicalTfidf(base_r, 50, 50)
-    red = BERT_model(args.config, args.vocab, args.output)
+    from araElectra.QA import QA
+    red = QA()
     AI = SOQAL(ret, red, 0.999)
     print(AI)
     demo = Demo(AI, None)
