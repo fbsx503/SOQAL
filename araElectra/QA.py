@@ -8,9 +8,8 @@ class QA:
         self.qa_pipe = pipeline("question-answering", model="wissamantoun/araelectra-base-artydiqa")
 
     def answerQuestion(self, question, context):
-        print(self.tokenizer.tokenize(context))
         result = self.qa_pipe(question=self.prep.preprocess(question), context=context)
-        print(result)
+        return result
 
     def preprocess(self, text):
         return self.prep.preprocess(text)
