@@ -97,10 +97,8 @@ class SOQAL:
         dataset = self.build_quest_json_araElectra(docs)
         print("built documents json")
         total_result = []
-        for question in dataset:
-            total_result.append(self.reader.answerQuestion(question=self.reader.preprocess(quest),
-                                                           context=self.reader.preprocess(question)))
-
+        for context in dataset:
+            total_result.append(self.reader.answerQuestion(question=quest, context=self.reader.preprocess(context)))
         result = sorted(total_result, key=lambda object1: object1["score"], reverse=True)
         answers = []
         for i in range(0, 5):

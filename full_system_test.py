@@ -5,8 +5,8 @@ import pickle
 sys.path.append(os.path.abspath("retriever"))
 from retriever.TfidfRetriever import *
 sys.path.append(os.path.abspath("bert"))
-from bert.Bert_model import BERT_model
 from bert.evaluate import *
+from araElectra.QA import QA
 
 def accuracy_full_system(AI, dataset):
     with open(dataset) as f:
@@ -21,7 +21,7 @@ def accuracy_full_system(AI, dataset):
     for article in dataset:
         for paragraph in article['paragraphs']:
             for qa in paragraph['qas']:
-                response = AI.ask(qa['question'])
+                response = AI.ask_araelectra(qa['question'])
                 question_no = question_no + 1
                 exact_match_max_1 = 0
                 f1_max_1 = 0
@@ -68,9 +68,6 @@ def accuracy_system(AI):
 
 import  argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('-c', '--config', help='Path to bert_config.json', required=True)
-parser.add_argument('-v', '--vocab', help='Path to vocab.txt', required=True)
-parser.add_argument('-o', '--output', help='Directory of model outputs', required=True)
 parser.add_argument('-r', '--ret-path', help='Retriever Path', required=True)
 
 
@@ -78,7 +75,7 @@ def main():
     args = parser.parse_args()
     base_r = pickle.load(open(args.ret_path, "rb"))
     ret = HierarchicalTfidf(base_r, 50, 50)
-    red = BERT_model(args.config, args.vocab, args.output)
+    red = QA()
     AI = SOQAL(ret, red, 0.999)
     print(AI)
     accuracy_system(AI)

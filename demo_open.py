@@ -16,6 +16,7 @@ import json
 
 sys.path.append(os.path.abspath("retriever"))
 from retriever.TfidfRetriever import *
+from araElectra.QA import QA
 
 sys.path.append(os.path.abspath("bert"))
 from bert.Bert_model import BERT_model
@@ -98,7 +99,6 @@ def main():
     args = parser.parse_args()
     base_r = pickle.load(open(args.ret_path, "rb"))
     ret = HierarchicalTfidf(base_r, 50, 50)
-    from araElectra.QA import QA
     red = QA()
     AI = SOQAL(ret, red, 0.999)
     print(AI)
