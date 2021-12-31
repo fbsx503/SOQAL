@@ -98,7 +98,10 @@ class SOQAL:
         print("built documents json")
         total_result = []
         for context in dataset:
-            total_result.append(self.reader.answerQuestion(question=quest, context=self.reader.preprocess(context)))
+            context = self.reader.preprocess(context)
+            if len(context) < 2:
+                continue
+            total_result.append(self.reader.answerQuestion(question=quest, context=context))
         result = sorted(total_result, key=lambda object1: object1["score"], reverse=True)
         answers = []
         for i in range(0, 5):
