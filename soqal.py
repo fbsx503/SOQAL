@@ -91,7 +91,7 @@ class SOQAL:
         prediction = self.agreggate(answers, answers_scores, doc_scores)
         return prediction
 
-    def ask_araelectra(self, quest):
+    def ask_araelectra1(self, quest):
         docs, doc_scores = self.retriever.get_topk_docs_scores(quest)
         print("got documents")
         dataset = self.build_quest_json_araElectra(docs)
@@ -107,3 +107,25 @@ class SOQAL:
         for i in range(0, 5):
             answers.append(result[i]["answer"])
         return answers
+
+    def ask_araelectra(self, quest):
+        docs, doc_scores = self.retriever.get_topk_docs_scores(quest)
+        print("got documents")
+        dataset = self.build_quest_json_araElectra(docs)
+        print("built documents json")
+        total_result = []
+        id = 0
+        for context in dataset:
+            context = self.reader.preprocess(context)
+            if len(context) < 2:
+               doc_scores = np.delete(doc_scores, id)
+               continue
+            id += 1
+            total_result.append(self.reader.answerQuestion(question=quest, context=context))
+        answers = []
+        answer_scores = []
+        for result in total_result:
+            answers.append(result['answer'])
+            answer_scores.append(result['score'])
+        prediction = self.agreggate(answers, answer_scores, doc_scores)
+        return prediction

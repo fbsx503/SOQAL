@@ -154,13 +154,13 @@ class HierarchicalTfidf:
             ps = doc.split("###")
             for p in ps:
                 pars.append(p)
-        r2 = TfidfRetriever(pars, self.k, 4)
+        r2 = TfidfRetriever(pars, self.k, 2)
         top_docs, docs_scores = r2.get_topk_docs_scores(query)
         return top_docs, docs_scores
 
     def get_topk_docs(self, query):
         docs = self.r.get_topk_docs(query)
-        r2 = TfidfRetriever_sys(docs, self.k, 4)
+        r2 = TfidfRetriever_sys(docs, self.k, 2)
         top_docs = r2.get_topk_docs(query)
         return top_docs
 
