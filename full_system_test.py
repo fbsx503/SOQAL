@@ -18,6 +18,9 @@ def accuracy_full_system(AI, dataset):
     f1_1 = 0
     f1_3 = 0
     f1_5 = 0
+    # response = AI.ask_araelectra("من هو حاكم مصر الأن؟")
+    # print(response)
+    # exit(0)
     for article in dataset:
         for paragraph in article['paragraphs']:
             for qa in paragraph['qas']:
@@ -29,6 +32,7 @@ def accuracy_full_system(AI, dataset):
                 exact_match_max_3 = 0
                 f1_max_5 = 0
                 exact_match_max_5 = 0
+                print('Context: ' + str(paragraph['context']))
                 for answer in qa['answers']:
                     print("Question number is: " + str(question_no))
                     print("Question is: " + qa['question'])
@@ -69,14 +73,16 @@ def accuracy_system(AI):
 import  argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('-r', '--ret-path', help='Retriever Path', required=True)
-
+parser.add_argument('-b', '--beta', help='Beta', required=True)
 
 def main():
     args = parser.parse_args()
     base_r = pickle.load(open(args.ret_path, "rb"))
+    beta = float(args.beta)
     ret = HierarchicalTfidf(base_r, 50, 50)
     red = QA()
-    AI = SOQAL(ret, red, 0.999)
+    print(beta)
+    AI = SOQAL(ret, red, beta)
     print(AI)
     accuracy_system(AI)
 
