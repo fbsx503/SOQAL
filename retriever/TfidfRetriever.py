@@ -173,7 +173,9 @@ class bm25:
         self.tokenizer = WordPunctTokenizer()
         self.stemmer = ARLSTem()
         self.docs = self.docs_stem(docs)
-        self.stopwords = stopwords.words('arabic')
+        self.stopwords = stopwords.words('arabic
+		self.tok_corpus = [s.split() for s in self.docs]
+        self.bm25 = BM25(self.tok_corpus)
 
     def docs_stem(self, docs):
         docs_stemmed = []
@@ -197,7 +199,7 @@ class bm25:
     def get_topk_docs_scores(self, question):
         question = self.stem_string(question)
         query = question.split()
-        scores = bm25.get_scores(query)
+        scores = self.bm25.get_scores(query)
 
         best_docs = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:self.k]
         final_docs = []
