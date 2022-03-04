@@ -172,8 +172,8 @@ class bm25:
         self.k = k
         self.tokenizer = WordPunctTokenizer()
         self.stemmer = ARLSTem()
-        self.docs = self.docs_stem(docs)
         self.stopwords = stopwords.words('arabic')
+        self.docs = self.docs_stem(docs)
         self.tok_corpus = [s.split() for s in self.docs]
         self.bm25 = BM25(self.tok_corpus)
 
