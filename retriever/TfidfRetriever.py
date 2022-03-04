@@ -192,7 +192,8 @@ class bm25:
                 if s in token:
                     has_symbol = True
                     break
-            if not has_symbol:
+
+            if not has_symbol and token not in self.stopwords:
                 str_processed += token + " "
         return str_processed
 
@@ -200,7 +201,6 @@ class bm25:
         question = self.stem_string(question)
         query = question.split()
         scores = self.bm25.get_scores(query)
-
         best_docs = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:self.k]
         final_docs = []
         final_scores = []
