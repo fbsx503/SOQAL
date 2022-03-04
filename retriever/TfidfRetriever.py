@@ -196,8 +196,6 @@ class bm25:
 
     def get_topk_docs_scores(self, question):
         question = self.stem_string(question)
-        tok_corpus = [s.split() for s in self.docs]
-        bm25 = BM25(tok_corpus)
         query = question.split()
         scores = bm25.get_scores(query)
 
