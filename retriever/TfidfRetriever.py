@@ -7,12 +7,12 @@ from sklearn.metrics.pairwise import cosine_similarity, linear_kernel
 from nltk.tokenize import WordPunctTokenizer
 import numpy as np
 import pickle
+from gensim.summarization.bm25 import BM25
 from numpy import dot, array
 from scipy import sparse
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-n", "--ngrams", type=int, default=1, help="n-gram order")
 parser.add_argument("-k", "--topk", type=int, default=10, help="number of documents retriever should return")
 parser.add_argument('-w', '--wiki-path', help='Path of arwiki.p', required=True)
 parser.add_argument('-o', '--output-dir', help='Where to place the retrivers', required=True)
@@ -165,25 +165,70 @@ class HierarchicalTfidf:
         return top_docs
 
 
-def build_tfidfretriever(wiki_path, output_path, ngrams, k):
+class bm25:
+    SYMBOLS = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\"'
+
+    def __init__(self, docs, k):
+        self.k = k
+        self.tokenizer = WordPunctTokenizer()
+        self.stemmer = ARLSTem()
+        self.docs = self.docs_stem(docs)
+        self.stopwords = stopwords.words('arabic')
+
+    def docs_stem(self, docs):
+        docs_stemmed = []
+        for d in docs:
+            docs_stemmed.append(self.stem_string(d))
+        return docs_stemmed
+
+    def stem_string(self, str):
+        str_tokens = self.tokenizer.tokenize(str)
+        str_processed = ""
+        for token in str_tokens:
+            has_symbol = False
+            for s in self.SYMBOLS:
+                if s in token:
+                    has_symbol = True
+                    break
+            if not has_symbol:
+                str_processed += token + " "
+        return str_processed
+
+    def get_topk_docs_scores(self, question):
+        question = self.stem_string(question)
+        tok_corpus = [s.split() for s in self.docs]
+        bm25 = BM25(tok_corpus)
+        query = question.split()
+        scores = bm25.get_scores(query)
+
+        best_docs = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:self.k]
+        final_docs = []
+        final_scores = []
+        for i, b in enumerate(best_docs):
+            final_docs.append(self.docs[b])
+            final_scores.append(scores[b])
+        return final_docs, final_scores
+
+
+def build_tfidfretriever(wiki_path, output_path, k):
     wiki_data = pickle.load(open(wiki_path, "rb"))
     docs = []
     i = 0
     for art, pars in wiki_data.items():
         article_text = ""
         for p in pars:
-            article_text += p +"### "
+            article_text += p + "### "
         docs.append(article_text)
         i += 1
     print("finished building documents")
-    r = TfidfRetriever(docs, k, ngrams)
-    pickle.dump(r, open(output_path+"/tfidfretriever.p", "wb"))
+    r = bm25(docs, k)
+    pickle.dump(r, open(output_path + "/bm25retriever.p", "wb"))
 
 
 
 def main():
     args = parser.parse_args()
-    build_tfidfretriever(args.wiki_path, args.output_dir, args.ngrams, args.topk)
+    build_tfidfretriever(args.wiki_path, args.output_dir, args.topk)
 
 if __name__ == "__main__":
     main()
