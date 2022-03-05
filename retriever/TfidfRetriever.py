@@ -11,12 +11,14 @@ from gensim.summarization.bm25 import BM25
 from numpy import dot, array
 from scipy import sparse
 import argparse
+from transformers import AutoTokenizer
+from nltk import word_tokenize
+from nltk.stem.isri import ISRIStemmer
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-k", "--topk", type=int, default=10, help="number of documents retriever should return")
 parser.add_argument('-w', '--wiki-path', help='Path of arwiki.p', required=True)
 parser.add_argument('-o', '--output-dir', help='Where to place the retrivers', required=True)
-
 
 
 class TfidfRetriever:
@@ -103,10 +105,9 @@ class TfidfRetriever:
         return top_docs
 
 
-
-
 class TfidfRetriever_sys:
     SYMBOLS = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\"'
+
     def __init__(self, docs, k, ngrams, vectorizer=None, tfidf_matrix=None):
         self.k = k  # number of documents to return
         self.tokenizer = WordPunctTokenizer()
@@ -118,7 +119,6 @@ class TfidfRetriever_sys:
         else:
             self.vectorizer = vectorizer
             self.tfidf_matrix = tfidf_matrix
-
 
     def get_topk_docs(self, query):
         """
@@ -138,7 +138,6 @@ class TfidfRetriever_sys:
             top_docs.append(doc)
             i += 1
         return top_docs
-
 
 
 class HierarchicalTfidf:
@@ -171,35 +170,24 @@ class bm25:
     def __init__(self, docs, k):
         self.k = k
         self.tokenizer = WordPunctTokenizer()
-        self.stemmer = ARLSTem()
-        self.stopwords = stopwords.words('arabic')
-        self.docs = self.docs_stem(docs)
-        self.tok_corpus = [s.split() for s in self.docs]
+        self.docs = docs
+        self.stopwords = set(stopwords.words('arabic'))
+        self.stemmer = ISRIStemmer()
+        print(self.stemmer.stem(u'اعلاميون'))
+        self.tokenizer = AutoTokenizer.from_pretrained("wissamantoun/araelectra-base-artydiqa")
+        self.tok_corpus = [self.clean_article(self.tokenizer.tokenize(s)) for s in self.docs]
         self.bm25 = BM25(self.tok_corpus)
 
-    def docs_stem(self, docs):
-        docs_stemmed = []
-        for d in docs:
-            docs_stemmed.append(self.stem_string(d))
-        return docs_stemmed
-
-    def stem_string(self, str):
-        str_tokens = self.tokenizer.tokenize(str)
-        str_processed = ""
-        for token in str_tokens:
-            has_symbol = False
-            for s in self.SYMBOLS:
-                if s in token:
-                    has_symbol = True
-                    break
-
-            if not has_symbol and token not in self.stopwords:
-                str_processed += token + " "
-        return str_processed
+    def clean_article(self, article):
+        cleaned_article = []
+        for str in article:
+            if str in self.stopwords or str in self.SYMBOLS:
+                continue
+            cleaned_article.append(self.stemmer.stem(str))
+        return cleaned_article
 
     def get_topk_docs_scores(self, question):
-        question = self.stem_string(question)
-        query = question.split()
+        query = self.clean_article(self.tokenizer.tokenize(question))
         scores = self.bm25.get_scores(query)
         best_docs = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:self.k]
         final_docs = []
@@ -213,22 +201,19 @@ class bm25:
 def build_tfidfretriever(wiki_path, output_path, k):
     wiki_data = pickle.load(open(wiki_path, "rb"))
     docs = []
-    i = 0
     for art, pars in wiki_data.items():
-        article_text = ""
-        for p in pars:
-            article_text += p + "### "
-        docs.append(article_text)
-        i += 1
+        docs.append(" ".join(pars))
     print("finished building documents")
     r = bm25(docs, k)
+    print("finished building bm25. Dumping pickle now")
     pickle.dump(r, open(output_path + "/bm25retriever.p", "wb"))
-
 
 
 def main():
     args = parser.parse_args()
+
     build_tfidfretriever(args.wiki_path, args.output_dir, args.topk)
+
 
 if __name__ == "__main__":
     main()
