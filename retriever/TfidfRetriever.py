@@ -174,9 +174,7 @@ class bm25:
         self.stopwords = set(stopwords.words('arabic'))
         self.stemmer = ISRIStemmer()
         print(self.stemmer.stem(u'اعلاميون'))
-        self.tokenizer = AutoTokenizer.from_pretrained("wissamantoun/araelectra-base-artydiqa")
-        self.tok_corpus = [self.clean_article(self.tokenizer.tokenize(s)) for s in self.docs]
-        self.bm25 = BM25(self.tok_corpus)
+        self.bm25 = BM25([self.clean_article(self.tokenizer.tokenize(s)) for s in self.docs], k1=3, k2=1.2)
 
     def clean_article(self, article):
         cleaned_article = []
@@ -211,7 +209,6 @@ def build_tfidfretriever(wiki_path, output_path, k):
 
 def main():
     args = parser.parse_args()
-
     build_tfidfretriever(args.wiki_path, args.output_dir, args.topk)
 
 
