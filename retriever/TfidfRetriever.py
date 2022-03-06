@@ -174,7 +174,7 @@ class bm25:
         self.stopwords = set(stopwords.words('arabic'))
         self.stemmer = ISRIStemmer()
         print(self.stemmer.stem(u'اعلاميون'))
-        self.bm25 = BM25([self.clean_article(self.tokenizer.tokenize(s)) for s in self.docs], k1=3, k2=1.2)
+        self.bm25 = BM25([self.clean_article(self.tokenizer.tokenize(s)) for s in self.docs], k1=3, b=1.5)
 
     def clean_article(self, article):
         cleaned_article = []
