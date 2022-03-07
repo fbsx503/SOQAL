@@ -71,13 +71,12 @@ class SOQAL:
         return answers_text, answers_scores
 
     def agreggate(self, answers_text, answers_scores, docs_scores):
-        ans_scores = np.asarray(answers_scores)
-        doc_scores = np.asarray(docs_scores)
-        final_scores = (1 - self.beta) * softmax(ans_scores) + self.beta * softmax(doc_scores)
-        ans_indx = np.argsort(final_scores)[::-1]
         pred = []
-        for k in range(0, min(5, len(ans_indx))):
-            pred.append(answers_text[ans_indx[k]])
+        ans_indx = np.argsort(answers_scores)[::-1]
+        pred.append(answer_text[ans_indx[0]])
+        for i in range(3):
+            pred.append(answer_text[i])
+        pred.append(answer_text[ans_indx[1]])
         return pred
 
     def ask(self, quest):
