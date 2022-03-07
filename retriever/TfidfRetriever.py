@@ -16,6 +16,7 @@ from nltk import word_tokenize
 from nltk.stem.isri import ISRIStemmer
 
 parser = argparse.ArgumentParser()
+parser.add_argument("-n", "--ngrams", type=int, default=1, help="n-gram order")
 parser.add_argument("-k", "--topk", type=int, default=10, help="number of documents retriever should return")
 parser.add_argument('-w', '--wiki-path', help='Path of arwiki.p', required=True)
 parser.add_argument('-o', '--output-dir', help='Where to place the retrivers', required=True)
@@ -27,7 +28,7 @@ class TfidfRetriever:
     def __init__(self, docs, k, ngrams, vectorizer=None, tfidf_matrix=None):
         self.k = k  # number of documents to return
         self.tokenizer = WordPunctTokenizer()
-        self.stemmer = ARLSTem()
+        self.stemmer = ISRIStemmer()
         self.docs = docs
         self.stopwords = stopwords.words('arabic')
         self.vectorizer = TfidfVectorizer(ngram_range=(1, ngrams), norm=None, stop_words=self.stopwords)
@@ -54,7 +55,7 @@ class TfidfRetriever:
                     has_symbol = True
                     break
             if not has_symbol:
-                str_processed += token + " "
+                str_processed += self.stemmer.stem(token) + " "
         return str_processed
 
     def get_topk_docs_scores(self, query):
@@ -111,7 +112,7 @@ class TfidfRetriever_sys:
     def __init__(self, docs, k, ngrams, vectorizer=None, tfidf_matrix=None):
         self.k = k  # number of documents to return
         self.tokenizer = WordPunctTokenizer()
-        self.stemmer = ARLSTem()
+        self.stemmer = ISRIStemmer()
         self.docs = docs
         self.vectorizer = TfidfVectorizer(ngram_range=(1, ngrams), norm=None)
         if tfidf_matrix is None or vectorizer is None:
@@ -196,20 +197,24 @@ class bm25:
         return final_docs, final_scores
 
 
-def build_tfidfretriever(wiki_path, output_path, k):
+def build_tfidfretriever(wiki_path, output_path, ngrams, k):
     wiki_data = pickle.load(open(wiki_path, "rb"))
     docs = []
+    i = 0
     for art, pars in wiki_data.items():
-        docs.append(" ".join(pars))
+        article_text = ""
+        for p in pars:
+            article_text += p + "### "
+        docs.append(article_text)
+        i += 1
     print("finished building documents")
-    r = bm25(docs, k)
-    print("finished building bm25. Dumping pickle now")
-    pickle.dump(r, open(output_path + "/bm25retriever.p", "wb"))
+    r = TfidfRetriever(docs, k, ngrams)
+    pickle.dump(r, open(output_path + "/tfidfretriever.p", "wb"))
 
 
 def main():
     args = parser.parse_args()
-    build_tfidfretriever(args.wiki_path, args.output_dir, args.topk)
+    build_tfidfretriever(args.wiki_path, args.output_dir, args.ngrams, args.topk)
 
 
 if __name__ == "__main__":
