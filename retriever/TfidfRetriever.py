@@ -27,10 +27,10 @@ class TfidfRetriever:
 
     def __init__(self, docs, k, ngrams, vectorizer=None, tfidf_matrix=None):
         self.k = k  # number of documents to return
-        self.tokenizer = AutoTokenizer.from_pretrained("aubmindlab/araelectra-base-discriminator")
+        self.tokenizer = WordPunctTokenizer()
         self.stemmer = ISRIStemmer()
         self.docs = docs
-        self.stopwords = set(stopwords.words('arabic'))
+        self.stopwords = stopwords.words('arabic')
         self.vectorizer = TfidfVectorizer(ngram_range=(1, ngrams), norm=None, stop_words=self.stopwords)
         if tfidf_matrix is None or vectorizer is None:
             docs_stemmed = self.docs_stem()
@@ -56,14 +56,14 @@ class TfidfRetriever:
                     break
             if not has_symbol:
                 str_processed += self.stemmer.stem(token) + " "
-        return str_processed.strip()
+        return str_processed
 
     def get_topk_docs_scores(self, query):
         """
         :param query: question as string
         :return: the top k articles with each of their paragraphs seperated by '###' as python list of strings
         """
-        query = self.stem_string(query)
+        qeury = self.stem_string(query)
         query_tfidf = self.vectorizer.transform([query])
         similarities_raw = linear_kernel(self.tfidf_matrix, query_tfidf)
         similarities = []
@@ -88,7 +88,44 @@ class TfidfRetriever:
         :param query: question as string
         :return: the top k articles with each of their paragraphs seperated by '###' as python list of strings
         """
-        query = self.stem_string(query)
+        qeury = self.stem_string(query)
+        query_tfidf = self.vectorizer.transform([query])
+        similarities_raw = linear_kernel(self.tfidf_matrix, query_tfidf)
+        similarities = []
+        for s in similarities_raw:
+            similarities.append(s[0])
+        indices_sorted = np.argsort(similarities)[::-1]  # reverse order
+        top_docs = []
+        scores = []
+        i = 0
+        while i < min(self.k, len(self.docs)):
+            doc = self.docs[indices_sorted[i]]
+            top_docs.append(doc)
+            i += 1
+        norm_cst = np.sum(np.asarray(scores))
+        return top_docs
+
+
+class TfidfRetriever_sys:
+    SYMBOLS = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\"'
+
+    def __init__(self, docs, k, ngrams, vectorizer=None, tfidf_matrix=None):
+        self.k = k  # number of documents to return
+        self.tokenizer = WordPunctTokenizer()
+        self.stemmer = ISRIStemmer()
+        self.docs = docs
+        self.vectorizer = TfidfVectorizer(ngram_range=(1, ngrams), norm=None)
+        if tfidf_matrix is None or vectorizer is None:
+            self.tfidf_matrix = self.vectorizer.fit_transform(docs)
+        else:
+            self.vectorizer = vectorizer
+            self.tfidf_matrix = tfidf_matrix
+
+    def get_topk_docs(self, query):
+        """
+        :param query: question as string
+        :return: the top k articles with each of their paragraphs seperated by '###' as python list of strings
+        """
         query_tfidf = self.vectorizer.transform([query])
         similarities_raw = linear_kernel(self.tfidf_matrix, query_tfidf)
         similarities = []
@@ -105,18 +142,27 @@ class TfidfRetriever:
 
 
 class HierarchicalTfidf:
-    def __init__(self, base_retriever, k2):
+    def __init__(self, base_retriever, k1, k2):
         self.r = base_retriever
+        self.r.k = k1
         self.k = k2
 
     def get_topk_docs_scores(self, query):
         docs = self.r.get_topk_docs(query)
-        r2 = TfidfRetriever(docs, self.k, 4)
+        pars = []
+        for doc in docs:
+            ps = doc.split("###")
+            for p in ps:
+                pars.append(p)
+        r2 = TfidfRetriever(pars, self.k, 2)
         top_docs, docs_scores = r2.get_topk_docs_scores(query)
         return top_docs, docs_scores
 
     def get_topk_docs(self, query):
-        return self.r.get_topk_docs(query)
+        docs = self.r.get_topk_docs(query)
+        r2 = TfidfRetriever_sys(docs, self.k, 2)
+        top_docs = r2.get_topk_docs(query)
+        return top_docs
 
 
 class bm25:
@@ -124,7 +170,7 @@ class bm25:
 
     def __init__(self, docs, k):
         self.k = k
-        self.tokenizer = AutoTokenizer.from_pretrained("wissamantoun/araelectra-base-artydiqa")
+        self.tokenizer = WordPunctTokenizer()
         self.docs = docs
         self.stopwords = set(stopwords.words('arabic'))
         self.stemmer = ISRIStemmer()
@@ -154,10 +200,15 @@ class bm25:
 def build_tfidfretriever(wiki_path, output_path, ngrams, k):
     wiki_data = pickle.load(open(wiki_path, "rb"))
     docs = []
+    i = 0
     for art, pars in wiki_data.items():
-        docs.append(" ".join(pars))
+        article_text = ""
+        for p in pars:
+            article_text += p + "### "
+        docs.append(article_text)
+        i += 1
     print("finished building documents")
-    r = HierarchicalTfidf(TfidfRetriever(docs, ngrams, k), 50)
+    r = TfidfRetriever(docs, k, ngrams)
     pickle.dump(r, open(output_path + "/tfidfretriever.p", "wb"))
 
 
