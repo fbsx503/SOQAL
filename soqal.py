@@ -109,28 +109,22 @@ class SOQAL:
 
     def ask_araelectra(self, quest):
         docs, doc_scores = self.retriever.get_topk_docs_scores(quest)
+        print("got documents")
         dataset = self.build_quest_json_araElectra(docs)
+        print("built documents json")
         total_result = []
         id = 0
         for context in dataset:
             context = self.reader.preprocess(context)
-            #print("context len"+str(len(context)))
             if len(context) < 2:
                doc_scores = np.delete(doc_scores, id)
                continue
             id += 1
-            import textwrap
-            lines = textwrap.wrap(context,350, break_long_words=False)
-            best_result=(self.reader.answerQuestion(question=quest, context=context))
-            for line in lines:
-                result=(self.reader.answerQuestion(question=quest, context=line))
-                if best_result['score'] < result['score']:
-                   best_result=result
-            total_result.append(best_result)
+            total_result.append(self.reader.answerQuestion(question=quest, context=context))
         answers = []
         answer_scores = []
         for result in total_result:
-            answers.append(self.reader.unpreprocess(result['answer']))
+            answers.append(result['answer'])
             answer_scores.append(result['score'])
         prediction = self.agreggate(answers, answer_scores, doc_scores)
         return prediction
