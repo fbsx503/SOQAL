@@ -66,7 +66,7 @@ def accuracy_full_system(AI, dataset):
 
 
 def accuracy_system(AI):
-    dataset_path = "data/arcd.json"
+    dataset_path = "data/MLQA-dev-context-ar-question-ar.json"
     accuracy_full_system(AI, dataset_path)
 
 
