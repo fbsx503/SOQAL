@@ -5,7 +5,7 @@ from transformers import pipeline
 class QA:
     def __init__(self):
         self.prep = ArabertPreprocessor("aubmindlab/araelectra-base-discriminator")
-        self.qa_pipe = pipeline("question-answering", model="/home/aymanm419/run2")
+        self.qa_pipe = pipeline("question-answering", model="/home/aymanm419/electra_pytorch/")
 
     def answerQuestion(self, question, context):
         result = self.qa_pipe(question=self.prep.preprocess(question), context=context)
