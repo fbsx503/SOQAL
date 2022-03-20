@@ -7,6 +7,7 @@ from retriever.TfidfRetriever import *
 sys.path.append(os.path.abspath("bert"))
 from bert.evaluate import *
 from araElectra.QA import QA
+from araElectra.tensorflow.Araelectra import Araelectra
 
 def accuracy_full_system(AI, dataset):
     with open(dataset) as f:
@@ -80,7 +81,7 @@ def main():
     base_r = pickle.load(open(args.ret_path, "rb"))
     beta = float(args.beta)
     ret = HierarchicalTfidf(base_r, 50, 50)
-    red = QA()
+    red = Araelectra()
     print(beta)
     AI = SOQAL(ret, red, beta)
     print(AI)

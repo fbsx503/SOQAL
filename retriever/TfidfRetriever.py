@@ -7,7 +7,6 @@ from sklearn.metrics.pairwise import cosine_similarity, linear_kernel
 from nltk.tokenize import WordPunctTokenizer
 import numpy as np
 import pickle
-from gensim.summarization.bm25 import BM25
 from numpy import dot, array
 from scipy import sparse
 import argparse

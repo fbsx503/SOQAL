@@ -115,16 +115,16 @@ class SOQAL:
         total_result = []
         id = 0
         for context in dataset:
-            context = self.reader.preprocess(context)
             if len(context) < 2:
                doc_scores = np.delete(doc_scores, id)
                continue
             id += 1
-            total_result.append(self.reader.answerQuestion(question=quest, context=context))
+            total_result.append(self.reader.get_answer(quest, context))
+        print(len(total_result))
         answers = []
         answer_scores = []
         for result in total_result:
-            answers.append(result['answer'])
-            answer_scores.append(result['score'])
+            answers.append(result['text'])
+            answer_scores.append(result['start_logit'] * result['end_logit'])
         prediction = self.agreggate(answers, answer_scores, doc_scores)
         return prediction
