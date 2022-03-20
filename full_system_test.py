@@ -7,7 +7,7 @@ from retriever.TfidfRetriever import *
 sys.path.append(os.path.abspath("bert"))
 from bert.evaluate import *
 from araElectra.QA import QA
-from araElectra.tensorflow.Araelectra import Araelectra
+from araElectra.tf.Araelectra import Araelectra
 
 def accuracy_full_system(AI, dataset):
     with open(dataset) as f:

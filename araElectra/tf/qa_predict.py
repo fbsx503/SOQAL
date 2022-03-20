@@ -22,7 +22,7 @@ from .electra.finetune.qa.qa_tasks import QAExample
 
 tf.logging.set_verbosity(tf.logging.ERROR)
 
-DATA_MODEL_DIR = '/mnt/427AB1F27AB1E339/CurrentSemester/NeuralArabicQuestionAnswering/SOQAL/araElectra/tensorflow/model/'
+DATA_MODEL_DIR = '/home/SOQAL/araElectra/tf/model/'
 INIT_CHECKPOINT = DATA_MODEL_DIR + 'model/model.ckpt-24532'
 
 class FinetuningModel(object):

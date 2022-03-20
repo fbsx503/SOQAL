@@ -12,4 +12,4 @@ class Araelectra():
     def get_answer(self, question, paragraph):
         question = question.lstrip().rstrip()
         _res_electra = qa_predict.predict(question, paragraph, self.model_electra)
-        return _res_electra
+        return _res_electra['q_0'][0]

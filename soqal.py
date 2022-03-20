@@ -120,7 +120,6 @@ class SOQAL:
                continue
             id += 1
             total_result.append(self.reader.get_answer(quest, context))
-        print(len(total_result))
         answers = []
         answer_scores = []
         for result in total_result:
