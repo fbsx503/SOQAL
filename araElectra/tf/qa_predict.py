@@ -22,7 +22,7 @@ from .electra.finetune.qa.qa_tasks import QAExample
 
 tf.logging.set_verbosity(tf.logging.ERROR)
 
-DATA_MODEL_DIR = '/home/SOQAL/araElectra/tf/model/'
+DATA_MODEL_DIR = '/mnt/427AB1F27AB1E339/CurrentSemester/NeuralArabicQuestionAnswering/DownloadedForGP/model/'
 INIT_CHECKPOINT = DATA_MODEL_DIR + 'model/model.ckpt-24532'
 
 class FinetuningModel(object):
@@ -64,57 +64,37 @@ class FinetuningModel(object):
             tf.one_hot(features["task_id"], len(config.task_names)))
 
 
-def model_fn_builder(config: configure_finetuning.FinetuningConfig, tasks,
-                     num_train_steps, pretraining_config=None):
+class model_fn_builder:
     """Returns `model_fn` closure for TPUEstimator."""
+    def __init__(self, config, tasks, num_train_steps, pretraining_config):
+        self.config = config
+        self.tasks = tasks
+        self.num_train_steps = num_train_steps
+        self.pretraining_config = pretraining_config
+        self.id = 0
 
-    def model_fn(features, labels, mode, params):
-        """The `model_fn` for TPUEstimator."""
-        utils.log("Building model...")
-        is_training = (mode == tf.estimator.ModeKeys.TRAIN)
-        model = FinetuningModel(
-            config, tasks, is_training, features, num_train_steps)
-
-        if pretraining_config is not None:
-            # init_checkpoint = tf.train.latest_checkpoint(pretraining_config.model_dir)
-            init_checkpoint = pretraining_config['checkpoint']
+    def build_first_time(self, features, labels, mode, params):
+        if self.pretraining_config is not None:
+            init_checkpoint = self.pretraining_config['checkpoint']
             utils.log("Using checkpoint", init_checkpoint)
         tvars = tf.trainable_variables()
-        scaffold_fn = None
         if init_checkpoint:
             assignment_map, _ = modeling.get_assignment_map_from_checkpoint(
                 tvars, init_checkpoint)
             tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
 
-        # Build model for training or prediction
-        if mode == tf.estimator.ModeKeys.TRAIN:
-            train_op = optimization.create_optimizer(
-                model.loss, config.learning_rate, num_train_steps,
-                weight_decay_rate=config.weight_decay_rate,
-                use_tpu=config.use_tpu,
-                warmup_proportion=config.warmup_proportion,
-                layerwise_lr_decay_power=config.layerwise_lr_decay,
-                n_transformer_layers=model.bert_config.num_hidden_layers
-            )
-            output_spec = tf.estimator.tpu.TPUEstimatorSpec(
-                mode=mode,
-                loss=model.loss,
-                train_op=train_op,
-                scaffold_fn=scaffold_fn,
-                training_hooks=[training_utils.ETAHook(
-                    {} if config.use_tpu else dict(loss=model.loss),
-                    num_train_steps, config.iterations_per_loop, config.use_tpu, 10)])
-        else:
-            assert mode == tf.estimator.ModeKeys.PREDICT
-            output_spec = tf.estimator.tpu.TPUEstimatorSpec(
-                mode=mode,
-                predictions=utils.flatten_dict(model.outputs),
-                scaffold_fn=scaffold_fn)
-
-        utils.log("Building complete")
+    def model_fn(self, features, labels, mode, params):
+        is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+        model = FinetuningModel(self.config, self.tasks, is_training, features, self.num_train_steps)
+        if self.id == 0:
+            self.build_first_time(features, labels, mode, params)
+        self.id += 1
+        scaffold_fn = None
+        output_spec = tf.estimator.tpu.TPUEstimatorSpec(
+            mode=mode,
+            predictions=utils.flatten_dict(model.outputs),
+            scaffold_fn=scaffold_fn)
         return output_spec
-
-    return model_fn
 
 class ModelRunner(object):
     """Fine-tunes a model on a supervised task."""
@@ -127,6 +107,7 @@ class ModelRunner(object):
 
         is_per_host = tf.estimator.tpu.InputPipelineConfig.PER_HOST_V2
         tpu_cluster_resolver = None
+
 
         tpu_config = tf.estimator.tpu.TPUConfig(
             iterations_per_loop=config.iterations_per_loop,
@@ -145,29 +126,50 @@ class ModelRunner(object):
         self._train_input_fn, self.train_steps = None, 0
 
         model_fn = model_fn_builder(
-            config=config,
-            tasks=self._tasks,
-            num_train_steps=self.train_steps,
-            pretraining_config=pretraining_config)
+            config,
+            self._tasks,
+            self.train_steps,
+            pretraining_config)
 
         self._estimator = tf.estimator.tpu.TPUEstimator(
             use_tpu=config.use_tpu,
-            model_fn=model_fn,
+            model_fn=model_fn.model_fn,
             config=run_config,
             train_batch_size=config.train_batch_size,
             eval_batch_size=config.eval_batch_size,
             predict_batch_size=config.predict_batch_size)
+        self.task = tasks[0]
+        self.eval_input_fn, self._ = self._preprocessor.prepare_predict([tasks[0]], "dev")
+        self.scorer = tasks[0].get_scorer()
 
-    def predict(self, split="dev", return_results=False):
-        task = self._tasks[0]
-        eval_input_fn, _ = self._preprocessor.prepare_predict([task], split)
-        results = self._estimator.predict(input_fn=eval_input_fn, yield_single_examples=True)
-        scorer = task.get_scorer()
+
+    def predict(self, question, context):
+
+        self._tasks[0]._examples = {}
+        question = [question] if type(question) == str else question
+        example = {
+            "data": [
+                {
+                    "paragraphs": [
+                        {
+                            "qas": [{"question": q, "id": 'q_' + str(i)} for i, q in enumerate(question)],
+                            "context": context
+                        }
+                    ]
+                }
+            ]
+        }
+
+        with open(DATA_MODEL_DIR + 'data/dev.json', 'w') as f:
+            f.writelines(json.dumps(example))
+            f.close()
+
+        results = self._estimator.predict(input_fn=self.eval_input_fn, yield_single_examples=True)
         for r in results:
             if r["task_id"] != len(self._tasks):  # ignore padding examples
                 r = utils.nest_dict(r, self._config.task_names)
-                scorer.update(r[task.name])
-        return scorer.get_results()
+                self.scorer.update(r[self.task.name])
+        return self.scorer.get_results()
 
 
 def init_model():
@@ -183,30 +185,3 @@ def init_model():
     model_runner = ModelRunner(config, tasks, pretraining_config=pretraining_config)
     return model_runner
 
-def predict(question, context, model):
-    model._tasks[0]._examples = {}
-    question = [question] if type(question) == str else question
-    example = {
-        "data": [
-            {
-                "paragraphs": [
-                    {
-                        "qas": [{"question": q, "id": 'q_' + str(i)} for i, q in enumerate(question)],
-                        "context": context
-                    }
-                ]
-            }
-        ]
-    }
-
-    try:
-        os.remove(DATA_MODEL_DIR + 'data/dev.json')
-        shutil.rmtree(DATA_MODEL_DIR + 'tfrecords')
-    except Exception as err:
-        print(err)
-
-    with open(DATA_MODEL_DIR + 'data/dev.json', 'w') as f:
-        f.writelines(json.dumps(example))
-        f.close()
-
-    return model.predict()

@@ -8,6 +8,7 @@ sys.path.append(os.path.abspath("bert"))
 from bert.evaluate import *
 from araElectra.QA import QA
 from araElectra.tf.Araelectra import Araelectra
+from retriever.GoogleSearchRetriever import *
 
 def accuracy_full_system(AI, dataset):
     with open(dataset) as f:
@@ -67,7 +68,7 @@ def accuracy_full_system(AI, dataset):
 
 
 def accuracy_system(AI):
-    dataset_path = "data/MLQA-dev-context-ar-question-ar.json"
+    dataset_path = "data/arcd-test.json"
     accuracy_full_system(AI, dataset_path)
 
 
