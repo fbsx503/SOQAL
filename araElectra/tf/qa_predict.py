@@ -22,8 +22,8 @@ from .electra.finetune.qa.qa_tasks import QAExample
 
 tf.logging.set_verbosity(tf.logging.ERROR)
 
-DATA_MODEL_DIR = '/mnt/427AB1F27AB1E339/CurrentSemester/NeuralArabicQuestionAnswering/DownloadedForGP/model/'
-INIT_CHECKPOINT = DATA_MODEL_DIR + 'model/model.ckpt-24532'
+DATA_MODEL_DIR = '/home/models/araelectra/model/'
+INIT_CHECKPOINT = DATA_MODEL_DIR + 'model/model.ckpt-957'
 
 class FinetuningModel(object):
     """Finetuning model with support for multi-task training."""

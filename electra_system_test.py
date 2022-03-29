@@ -95,9 +95,9 @@ def main():
         ret = ApiGoogleSearchRetriever(wiki_data, doc_number)
     else:
         base_r = pickle.load(open(args.ret_path, "rb"))
-        ret = HierarchicalTfidf(base_r, 50, 50)
+        ret = HierarchicalTfidf(base_r, 50, 7)
     red = Araelectra()
-    AI = SOQAL(ret, red, beta)
+    AI = SOQAL(ret, red, 0.999)
     accuracy_system(AI)
 
 

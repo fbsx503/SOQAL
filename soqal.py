@@ -87,6 +87,8 @@ class SOQAL:
         pred = []
         for k in range(0, min(5, len(ans_indx))):
             pred.append(answers_text[ans_indx[k]])
+        print("aggregated answers here")
+        print(pred)
         return pred
 
     def ask(self, quest):
