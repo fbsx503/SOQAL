@@ -986,12 +986,13 @@ class FeatureWriter(object):
 
 
 class BERT_model:
-    def __init__(self, vocab, output):
+    def __init__(self, config, vocab, output):
+        self.bert_config_file = config
         self.vocab_file = vocab
         self.output_dir = output
         self.init_checkpoint = output
         tf.logging.set_verbosity(0)
-        self.bert_config = modeling.BertConfig(vocab_size=64000, hidden_size=512, num_hidden_layers=8, num_attention_heads=6, intermediate_size=1024)
+        self.bert_config = modeling.BertConfig.from_json_file(self.bert_config_file)
         tf.gfile.MakeDirs(self.output_dir)
         self.tokenizer = tokenization.FullTokenizer(
             vocab_file=self.vocab_file, do_lower_case=do_lower_case)

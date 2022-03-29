@@ -98,6 +98,7 @@ def main():
     else:
         base_r = pickle.load(open(args.ret_path, "rb"))
         ret = HierarchicalTfidf(base_r, 50, 50)
+
     red = BERT_model(args.config, args.vocab, args.output)
     AI = SOQAL(ret, red, 0.999)
     print(AI)
