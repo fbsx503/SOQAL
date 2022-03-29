@@ -46,12 +46,6 @@ class ApiGoogleSearchRetriever:
         self.k = min(k, 10) # API has max 10 results
         self.docs = docs
         id = 0
-        print("doc names are")
-        for doc in docs:
-            print(doc)
-            id += 1
-            if id == 5:
-                break
         # custom search engine ID, need to create on cloud shell
         self.CSE = "58eb65c4e6c2f7475"
         # API KEY for custom search

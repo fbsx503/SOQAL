@@ -4,10 +4,10 @@ import sys
 import pickle
 sys.path.append(os.path.abspath("retriever"))
 from retriever.TfidfRetriever import *
+from retriever.GoogleSearchRetriever import *
 sys.path.append(os.path.abspath("bert"))
 from bert.Bert_model import BERT_model
 from bert.evaluate import *
-from araElectra.QA_par import QA_par
 
 def accuracy_full_system(AI, dataset):
     with open(dataset) as f:
@@ -52,14 +52,25 @@ def accuracy_full_system(AI, dataset):
                 f1_3 += f1_max_3
                 exact_match_5 += exact_match_max_5
                 f1_5 += f1_max_5
-    print("exact match score 1 = " + str(exact_match_1 / question_no))
-    print("exact match score 3 = " + str(exact_match_3 / question_no))
-    print("exact match score 5 = " + str(exact_match_5 / question_no))
-    print("f1 score 1 = " + str(f1_1 / question_no))
-    print("f3 score 1 = " + str(f1_3 / question_no))
-    print("f5 score 1 = " + str(f1_5 / question_no))
 
-
+                print("exact match score 1 = " + str(exact_match_1))
+                print("exact match score 3 = " + str(exact_match_3))
+                print("exact match score 5 = " + str(exact_match_5))
+                print("f1 score 1 = " + str(f1_1))
+                print("f3 score 1 = " + str(f1_3))
+                print("f5 score 1 = " + str(f1_5))
+                print("percent exact match score 1 = " + str(exact_match_1 / question_no))
+                print("percent exact match score 3 = " + str(exact_match_3 / question_no))
+                print("percent exact match score 5 = " + str(exact_match_5 / question_no))
+                print("percent f1 score 1 = " + str(f1_1 / question_no))
+                print("percent f3 score 1 = " + str(f1_3 / question_no))
+                print("percent f5 score 1 = " + str(f1_5 / question_no))
+    print("Final exact match score 1 = " + str(exact_match_1 / question_no))
+    print("Final exact match score 3 = " + str(exact_match_3 / question_no))
+    print("Final exact match score 5 = " + str(exact_match_5 / question_no))
+    print("Final f1 score 1 = " + str(f1_1 / question_no))
+    print("Final f3 score 1 = " + str(f1_3 / question_no))
+    print("Final f5 score 1 = " + str(f1_5 / question_no))
 
 
 def accuracy_system(AI):
@@ -72,14 +83,22 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-c', '--config', help='Path to bert_config.json', required=True)
 parser.add_argument('-v', '--vocab', help='Path to vocab.txt', required=True)
 parser.add_argument('-o', '--output', help='Directory of model outputs', required=True)
+parser.add_argument('-g', '--google', help='use tf-idf or google', required=True)
 parser.add_argument('-r', '--ret-path', help='Retriever Path', required=True)
+
 
 
 def main():
     args = parser.parse_args()
-    base_r = pickle.load(open(args.ret_path, "rb"))
-    ret = HierarchicalTfidf(base_r, 50, 50)
-    red = Bert_Model(args.config, args.vocab, args.output)
+    ret = 0
+    if args.google == 't':
+        doc_number = 10
+        wiki_data = pickle.load(open(args.ret_path, "rb"))
+        ret = ApiGoogleSearchRetriever(wiki_data, doc_number)
+    else:
+        base_r = pickle.load(open(args.ret_path, "rb"))
+        ret = HierarchicalTfidf(base_r, 50, 50)
+    red = BERT_model(args.config, args.vocab, args.output)
     AI = SOQAL(ret, red, 0.999)
     print(AI)
     accuracy_system(AI)
