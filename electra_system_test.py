@@ -89,7 +89,6 @@ parser.add_argument('-r', '--ret-path', help='Retriever Path', required=True)
 
 def main():
     args = parser.parse_args()
-    ret = 0
     if args.google == 't':
         doc_number = 10
         wiki_data = pickle.load(open(args.ret_path, "rb"))
@@ -98,9 +97,7 @@ def main():
         base_r = pickle.load(open(args.ret_path, "rb"))
         ret = HierarchicalTfidf(base_r, 50, 50)
     red = Araelectra()
-    print(beta)
     AI = SOQAL(ret, red, beta)
-    print(AI)
     accuracy_system(AI)
 
 

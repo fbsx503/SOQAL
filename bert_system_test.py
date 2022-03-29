@@ -90,7 +90,6 @@ parser.add_argument('-r', '--ret-path', help='Retriever Path', required=True)
 
 def main():
     args = parser.parse_args()
-    ret = 0
     if args.google == 't':
         doc_number = 10
         wiki_data = pickle.load(open(args.ret_path, "rb"))
@@ -101,7 +100,6 @@ def main():
 
     red = BERT_model(args.config, args.vocab, args.output)
     AI = SOQAL(ret, red, 0.999)
-    print(AI)
     accuracy_system(AI)
 
 

@@ -70,13 +70,23 @@ class SOQAL:
                 answers_scores.append(pred_score)
         return answers_text, answers_scores
 
-    def agreggate(self, answers_text, answers_scores, docs_scores):
+    def electra_agreggate(self, answers_text, answers_scores, docs_scores):
         pred = []
         ans_indx = np.argsort(answers_scores)[::-1]
         pred.append(answers_text[ans_indx[0]])
         for i in range(3):
             pred.append(answers_text[i])
         pred.append(answers_text[ans_indx[1]])
+        return pred
+
+    def bert_agreggate(self, answers_text, answers_scores, docs_scores):
+        ans_scores = np.asarray(answers_scores)
+        doc_scores = np.asarray(docs_scores)
+        final_scores = (1 - self.beta) * softmax(ans_scores) + self.beta * softmax(doc_scores)
+        ans_indx = np.argsort(final_scores)[::-1]
+        pred = []
+        for k in range(0, min(5, len(ans_indx))):
+            pred.append(answers_text[ans_indx[k]])
         return pred
 
     def ask(self, quest):
@@ -87,7 +97,7 @@ class SOQAL:
         nbest = self.reader.predict_batch(dataset)
         print("got predictions from BERT")
         answers, answers_scores = self.get_predictions(nbest)
-        prediction = self.agreggate(answers, answers_scores, doc_scores)
+        prediction = self.bert_agreggate(answers, answers_scores, doc_scores)
         return prediction
 
     def ask_araelectra1(self, quest):
@@ -125,5 +135,5 @@ class SOQAL:
         for result in total_result:
             answers.append(result['text'])
             answer_scores.append(result['start_logit'] * result['end_logit'])
-        prediction = self.agreggate(answers, answer_scores, doc_scores)
+        prediction = self.electra_agreggate(answers, answer_scores, doc_scores)
         return prediction
