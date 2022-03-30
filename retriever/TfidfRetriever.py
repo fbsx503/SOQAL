@@ -10,9 +10,6 @@ import pickle
 from numpy import dot, array
 from scipy import sparse
 import argparse
-from transformers import AutoTokenizer
-from nltk import word_tokenize
-from nltk.stem.isri import ISRIStemmer
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", "--ngrams", type=int, default=1, help="n-gram order")
@@ -21,13 +18,14 @@ parser.add_argument('-w', '--wiki-path', help='Path of arwiki.p', required=True)
 parser.add_argument('-o', '--output-dir', help='Where to place the retrivers', required=True)
 
 
+
 class TfidfRetriever:
     SYMBOLS = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\"'
 
     def __init__(self, docs, k, ngrams, vectorizer=None, tfidf_matrix=None):
         self.k = k  # number of documents to return
         self.tokenizer = WordPunctTokenizer()
-        self.stemmer = ISRIStemmer()
+        self.stemmer = ARLSTem()
         self.docs = docs
         self.stopwords = stopwords.words('arabic')
         self.vectorizer = TfidfVectorizer(ngram_range=(1, ngrams), norm=None, stop_words=self.stopwords)
@@ -54,7 +52,7 @@ class TfidfRetriever:
                     has_symbol = True
                     break
             if not has_symbol:
-                str_processed += self.stemmer.stem(token) + " "
+                str_processed += token + " "
         return str_processed
 
     def get_topk_docs_scores(self, query):
@@ -105,13 +103,14 @@ class TfidfRetriever:
         return top_docs
 
 
+
+
 class TfidfRetriever_sys:
     SYMBOLS = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\"'
-
     def __init__(self, docs, k, ngrams, vectorizer=None, tfidf_matrix=None):
         self.k = k  # number of documents to return
         self.tokenizer = WordPunctTokenizer()
-        self.stemmer = ISRIStemmer()
+        self.stemmer = ARLSTem()
         self.docs = docs
         self.vectorizer = TfidfVectorizer(ngram_range=(1, ngrams), norm=None)
         if tfidf_matrix is None or vectorizer is None:
@@ -119,6 +118,7 @@ class TfidfRetriever_sys:
         else:
             self.vectorizer = vectorizer
             self.tfidf_matrix = tfidf_matrix
+
 
     def get_topk_docs(self, query):
         """
@@ -140,8 +140,9 @@ class TfidfRetriever_sys:
         return top_docs
 
 
+
 class HierarchicalTfidf:
-    def __init__(self, base_retriever, k1, k2):
+    def __init__(self, base_retriever, k1 , k2):
         self.r = base_retriever
         self.r.k = k1
         self.k = k2
@@ -153,47 +154,15 @@ class HierarchicalTfidf:
             ps = doc.split("###")
             for p in ps:
                 pars.append(p)
-        r2 = TfidfRetriever(pars, self.k, 2)
+        r2 = TfidfRetriever(pars, self.k, 4)
         top_docs, docs_scores = r2.get_topk_docs_scores(query)
         return top_docs, docs_scores
 
     def get_topk_docs(self, query):
         docs = self.r.get_topk_docs(query)
-        r2 = TfidfRetriever_sys(docs, self.k, 2)
+        r2 = TfidfRetriever_sys(docs, self.k, 4)
         top_docs = r2.get_topk_docs(query)
         return top_docs
-
-
-class bm25:
-    SYMBOLS = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\"'
-
-    def __init__(self, docs, k):
-        self.k = k
-        self.tokenizer = WordPunctTokenizer()
-        self.docs = docs
-        self.stopwords = set(stopwords.words('arabic'))
-        self.stemmer = ISRIStemmer()
-        print(self.stemmer.stem(u'اعلاميون'))
-        self.bm25 = BM25([self.clean_article(self.tokenizer.tokenize(s)) for s in self.docs], k1=3, b=1.5)
-
-    def clean_article(self, article):
-        cleaned_article = []
-        for str in article:
-            if str in self.stopwords or str in self.SYMBOLS:
-                continue
-            cleaned_article.append(self.stemmer.stem(str))
-        return cleaned_article
-
-    def get_topk_docs_scores(self, question):
-        query = self.clean_article(self.tokenizer.tokenize(question))
-        scores = self.bm25.get_scores(query)
-        best_docs = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:self.k]
-        final_docs = []
-        final_scores = []
-        for i, b in enumerate(best_docs):
-            final_docs.append(self.docs[b])
-            final_scores.append(scores[b])
-        return final_docs, final_scores
 
 
 def build_tfidfretriever(wiki_path, output_path, ngrams, k):
@@ -203,18 +172,18 @@ def build_tfidfretriever(wiki_path, output_path, ngrams, k):
     for art, pars in wiki_data.items():
         article_text = ""
         for p in pars:
-            article_text += p + "### "
+            article_text += p +"### "
         docs.append(article_text)
         i += 1
     print("finished building documents")
     r = TfidfRetriever(docs, k, ngrams)
-    pickle.dump(r, open(output_path + "/tfidfretriever.p", "wb"))
+    pickle.dump(r, open(output_path+"/tfidfretriever.p", "wb"))
+
 
 
 def main():
     args = parser.parse_args()
     build_tfidfretriever(args.wiki_path, args.output_dir, args.ngrams, args.topk)
-
 
 if __name__ == "__main__":
     main()
