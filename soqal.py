@@ -50,11 +50,27 @@ class SOQAL:
         articles.append(article)
         return articles
 
-    def build_quest_json_araElectra(self, docs):
-        paragraph = []
+    def build_quest_json_araElectra(self, quest, docs):
+        paragraphs = []
+        id_i = 0
         for doc in docs:
-            paragraph.append(doc)
-        return paragraph
+            paragraph_context = doc
+            qas = []
+            id = str(id_i)
+            ques = quest
+            question = {
+                'question': ques,
+                'id': 'q_'+id
+            }
+            qas.append(question)
+            paragraph = {
+                'qas': qas,
+                'context': paragraph_context
+            }
+            paragraphs.append(paragraph)
+            id_i += 1
+        return {"data": [ { "paragraphs": paragraphs } ]}
+
 
     def get_predictions(self, predictions_raw):
         answers_text = []
@@ -74,9 +90,9 @@ class SOQAL:
         pred = []
         ans_indx = np.argsort(answers_scores)[::-1]
         pred.append(answers_text[ans_indx[0]])
+        pred.append(answers_text[ans_indx[1]])
         for i in range(3):
             pred.append(answers_text[i])
-        pred.append(answers_text[ans_indx[1]])
         return pred
 
     def bert_agreggate(self, answers_text, answers_scores, docs_scores):
@@ -121,21 +137,12 @@ class SOQAL:
 
     def ask_araelectra(self, quest):
         docs, doc_scores = self.retriever.get_topk_docs_scores(quest)
-        print("got documents")
-        dataset = self.build_quest_json_araElectra(docs)
-        print("built documents json")
-        total_result = []
-        id = 0
-        for context in dataset:
-            if len(context) < 2:
-               doc_scores = np.delete(doc_scores, id)
-               continue
-            id += 1
-            total_result.append(self.reader.get_answer(quest, context))
+        dataset = self.build_quest_json_araElectra(quest, docs)
+        total_result = self.reader.get_answer(dataset)
         answers = []
         answer_scores = []
         for result in total_result:
-            answers.append(result['text'])
-            answer_scores.append(result['start_logit'] * result['end_logit'])
+            answers.append(result[0]['text'])
+            answer_scores.append(result[0]['start_logit'] * result[0]['end_logit'])
         prediction = self.electra_agreggate(answers, answer_scores, doc_scores)
         return prediction

@@ -78,7 +78,7 @@ def accuracy_full_system(AI, dataset):
 
 
 def accuracy_system(AI):
-    dataset_path = "data/arcd-test.json"
+    dataset_path = "data/arcd.json"
     accuracy_full_system(AI, dataset_path)
 
 
@@ -95,7 +95,7 @@ def main():
         ret = ApiGoogleSearchRetriever(wiki_data, doc_number)
     else:
         base_r = pickle.load(open(args.ret_path, "rb"))
-        ret = HierarchicalTfidf(base_r, 50, 7)
+        ret = HierarchicalTfidf(base_r, 50, 50)
     red = Araelectra()
     AI = SOQAL(ret, red, 0.999)
     accuracy_system(AI)

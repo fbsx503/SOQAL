@@ -22,8 +22,8 @@ from .electra.finetune.qa.qa_tasks import QAExample
 
 tf.logging.set_verbosity(tf.logging.ERROR)
 
-DATA_MODEL_DIR = '/home/models/araelectra/model/'
-INIT_CHECKPOINT = DATA_MODEL_DIR + 'model/model.ckpt-957'
+DATA_MODEL_DIR = '/mnt/427AB1F27AB1E339/CurrentSemester/NeuralArabicQuestionAnswering/DownloadedForGP/model/'
+INIT_CHECKPOINT = DATA_MODEL_DIR + 'model/model.ckpt-24532'
 
 class FinetuningModel(object):
     """Finetuning model with support for multi-task training."""
@@ -143,25 +143,10 @@ class ModelRunner(object):
         self.scorer = tasks[0].get_scorer()
 
 
-    def predict(self, question, context):
-
+    def predict(self, dataset):
         self._tasks[0]._examples = {}
-        question = [question] if type(question) == str else question
-        example = {
-            "data": [
-                {
-                    "paragraphs": [
-                        {
-                            "qas": [{"question": q, "id": 'q_' + str(i)} for i, q in enumerate(question)],
-                            "context": context
-                        }
-                    ]
-                }
-            ]
-        }
-
         with open(DATA_MODEL_DIR + 'data/dev.json', 'w') as f:
-            f.writelines(json.dumps(example))
+            f.writelines(json.dumps(dataset))
             f.close()
 
         results = self._estimator.predict(input_fn=self.eval_input_fn, yield_single_examples=True)
