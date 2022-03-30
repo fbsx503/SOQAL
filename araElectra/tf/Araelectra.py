@@ -15,4 +15,5 @@ class Araelectra():
         total_result = []
         for _ in _res_electra:
             total_result.append(_res_electra['q_'+str(id)])
+            id += 1
         return total_result
