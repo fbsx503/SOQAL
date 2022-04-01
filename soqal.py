@@ -16,6 +16,7 @@ class SOQAL:
         self.retriever = retriever
         self.beta = beta
         self.reader = reader
+        self.retriever_cache={"changed":False}
 
     def build_quest_json_full(self, questions, list_docs):
         articles = []
@@ -151,8 +152,32 @@ class SOQAL:
         print("aggregated answers here")
         print(pred)
         return pred
+    
+    def get_topk_docs_scores_cache(self,question):
+        #read dict from disk
+        if question in self.retriever_cache:
+            return self.retriever_cache[question]
+        else:    
+            docs, doc_scores = self.retriever.get_topk_docs_scores(question)
+            self.retriever_cache[question]=[docs,doc_scores]
+            self.retriever_cache["changed"]=True
+        return docs,doc_scores
 
-    def ask_all(self, dataset):
+    def dumb_retirever_cache(self):
+        if self.retriever_cache["changed"] is True:
+            file = open('retriever/docsCache.txt', 'wb+')
+            pickle.dump(self.retriever_cache, file)                     
+            file.close()    
+            self.retriever_cache["changed"]=False
+
+    def load_retriever_cache(self):
+        # for reading also binary mode is important
+        dbfile = open('retriever/docsCache.txt', 'rb')     
+        self.retriever_cache = pickle.load(dbfile)
+        dbfile.close()
+        self.retriever_cache["changed"]=False
+
+    def ask_all(self, dataset,args):
         ground_truth = []
         questions = []
         articles = []
@@ -163,12 +188,15 @@ class SOQAL:
                 for qa in paragraph['qas']:
                     questions.append(qa['question'])
                     ground_truth.append(qa['answers'][0]['text'])
+        if args.retCache == 't':self.load_retriever_cache()
         for count, question in enumerate(questions):
             print("Retrieving documents for question number {}".format(count))
-            docs, doc_scores = self.retriever.get_topk_docs_scores(question)
+            if args.retCache == 't':docs, doc_scores = self.get_topk_docs_scores_cache(question)
+            else:docs, doc_scores = self.retriever.get_topk_docs_scores(question)
             articles.append(docs)
             articles_scores.append(doc_scores)
         print("Finished Retrieving documents")
+        if args.retCache == 't':self.dumb_retirever_cache()
         new_dataset = self.build_quest_json_full(questions, articles)
         print("Answering")
         answers_list = self.reader.predict_batch(new_dataset)

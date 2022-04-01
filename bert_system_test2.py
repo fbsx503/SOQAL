@@ -12,7 +12,7 @@ from bert.Bert_model import BERT_model
 from bert.evaluate import *
 
 
-def accuracy_full_system(AI, dataset):
+def accuracy_full_system(AI, dataset,args):
     with open(dataset) as f:
         dataset = json.load(f)['data']
     question_no = 0
@@ -22,7 +22,7 @@ def accuracy_full_system(AI, dataset):
     f1_1 = 0
     f1_3 = 0
     f1_5 = 0
-    AI.ask_all(dataset)
+    AI.ask_all(dataset,args)
     """
     for article in dataset:
         for paragraph in article['paragraphs']:
@@ -79,9 +79,9 @@ def accuracy_full_system(AI, dataset):
     """
 
 
-def accuracy_system(AI):
+def accuracy_system(AI,args):
     dataset_path = "data/arcd.json"
-    accuracy_full_system(AI, dataset_path)
+    accuracy_full_system(AI, dataset_path,args)
 
 
 import argparse
@@ -92,6 +92,7 @@ parser.add_argument('-v', '--vocab', help='Path to vocab.txt', required=True)
 parser.add_argument('-o', '--output', help='Directory of model outputs', required=True)
 parser.add_argument('-g', '--google', help='use tf-idf or google', required=True)
 parser.add_argument('-r', '--ret-path', help='Retriever Path', required=True)
+parser.add_argument('-rc', '--retCache', help='Retriever cache', required=True)
 
 
 def main():
@@ -106,7 +107,7 @@ def main():
 
     red = BERT_model(args.config, args.vocab, args.output)
     AI = SOQAL(ret, red, 0.999)
-    accuracy_system(AI)
+    accuracy_system(AI,args)
 
 
 if __name__ == "__main__":
