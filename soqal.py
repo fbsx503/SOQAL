@@ -2,6 +2,7 @@ import numpy as np
 import sys
 import pickle
 import json
+import os.path
 from bert.evaluate import *
 from araElectra.QA import QA
 
@@ -180,8 +181,10 @@ class SOQAL:
             self.retriever_cache["changed"] = False
 
     def load_retriever_cache(self):
-        # for reading also binary mode is important
-        dbfile = open('retriever/docsCache.txt', 'rb')
+        if not os.path.exists('retriever/docsCache.txt'):
+            self.retriever_cache["changed"]=False
+            return
+        dbfile = open('retriever/docsCache.txt', 'rb')     
         self.retriever_cache = pickle.load(dbfile)
         dbfile.close()
         self.retriever_cache["changed"]=False
