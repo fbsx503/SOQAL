@@ -12,7 +12,7 @@ from bert.Bert_model import BERT_model
 from bert.evaluate import *
 
 
-def accuracy_full_system(AI, dataset,args):
+def accuracy_full_system(AI, dataset, args):
     with open(dataset) as f:
         dataset = json.load(f)['data']
     question_no = 0
@@ -22,7 +22,7 @@ def accuracy_full_system(AI, dataset,args):
     f1_1 = 0
     f1_3 = 0
     f1_5 = 0
-    AI.ask_all(dataset,args)
+    AI.ask_all(dataset, args)
     """
     for article in dataset:
         for paragraph in article['paragraphs']:
@@ -79,9 +79,9 @@ def accuracy_full_system(AI, dataset,args):
     """
 
 
-def accuracy_system(AI,args):
-    dataset_path = "data/arcd.json"
-    accuracy_full_system(AI, dataset_path,args)
+def accuracy_system(AI, args):
+    dataset_path = "data/tydiqa-goldp-dev-arabic.json"
+    accuracy_full_system(AI, dataset_path, args)
 
 
 import argparse
@@ -90,9 +90,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-c', '--config', help='Path to bert_config.json', required=True)
 parser.add_argument('-v', '--vocab', help='Path to vocab.txt', required=True)
 parser.add_argument('-o', '--output', help='Directory of model outputs', required=True)
-parser.add_argument('-g', '--google', help='use tf-idf or google', required=True)
-parser.add_argument('-r', '--ret-path', help='Retriever Path', required=True)
-parser.add_argument('-rc', '--retCache', help='Retriever cache', required=True)
+parser.add_argument('-g', '--google', help='use tf-idf or google', required=False, default='f')
+parser.add_argument('-r', '--ret-path', help='Retriever Path', required=False, default='retriever/tfidfretriever.p')
+parser.add_argument('-rc', '--retCache', help='Retriever cache', required=False, default='t')
+parser.add_argument('-pm', '--pre-model', help='Preprocess model', required=False, default=None)
+parser.add_argument('-a', '--aggregate', help='Aggregate function', required=False, default='o')
 
 
 def main():
@@ -106,8 +108,8 @@ def main():
         ret = HierarchicalTfidf(base_r, 50, 50)
 
     red = BERT_model(args.config, args.vocab, args.output)
-    AI = SOQAL(ret, red, 0.999)
-    accuracy_system(AI,args)
+    AI = SOQAL(ret, red, 0.999, args.pre_model, args.aggregate)
+    accuracy_system(AI, args)
 
 
 if __name__ == "__main__":
