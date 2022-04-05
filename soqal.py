@@ -18,7 +18,7 @@ class SOQAL:
         self.retriever = retriever
         self.beta = beta
         self.reader = reader
-        self.reriever_cache = {"changed": False}
+        self.retriever_cache = {"changed": False}
         self.load_retriever_cache()
         if preprocessor_model is not None:
             print("Using preprocessing for context/question")
