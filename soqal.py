@@ -186,14 +186,65 @@ class SOQAL:
     def load_retriever_cache(self):
         print("Loading retrievr cache...")
         if not os.path.exists('retriever/docsCache.txt'):
-            self.retriever_cache["changed"]=False
+            self.retriever_cache["changed"] = False
             print("Cache file doesn't exist!")
             return
-        dbfile = open('retriever/docsCache.txt', 'rb')     
+        dbfile = open('retriever/docsCache.txt', 'rb')
         self.retriever_cache = pickle.load(dbfile)
         dbfile.close()
-        self.retriever_cache["changed"]=False
+        self.retriever_cache["changed"] = False
         print("Cache Loaded")
+
+    def build_quest_json_full_file(self, questions, list_docs):
+        articles = []
+        for question_index, docs in enumerate(list_docs):
+            paragraphs = []
+            for article_id, article in enumerate(docs):
+                paragraph = {
+                    'context': self.preprocessor.preprocess(article) if self.preprocessor is not None else article,
+                    'qas': [{
+                        'question': self.preprocessor.preprocess(
+                            questions[question_index]) if self.preprocessor is not None else questions[question_index],
+                        'id': "{qid}_{aid}".format(qid=question_index, aid=article_id),
+                        'answers': [{
+                            'text': "",
+                            'answer_start': 0
+                        }]
+                    }]
+                }
+                paragraphs.append(paragraph)
+            article = {
+                'title': "prediction_{qid}".format(qid=question_index),
+                'paragraphs': paragraphs
+            }
+            articles.append(article)
+        return {"data": articles, "version": "1.1"}
+
+    def dump_new_dataset(self, args, dataset):
+        ground_truth = []
+        questions = []
+        articles = []
+        articles_scores = []
+        print("Retrieving Questions!")
+        for article in dataset:
+            for paragraph in article['paragraphs']:
+                for qa in paragraph['qas']:
+                    questions.append(qa['question'])
+                    ground_truth.append(qa['answers'][0]['text'])
+        if args.retCache == 't': self.load_retriever_cache()
+        for count, question in enumerate(questions):
+            print("Retrieving documents for question number {}".format(count))
+            if args.retCache == 't':
+                docs, doc_scores = self.get_topk_docs_scores_cache(question)
+            else:
+                docs, doc_scores = self.retriever.get_topk_docs_scores(question)
+            articles.append(docs)
+            articles_scores.append(doc_scores)
+        print("Finished Retrieving documents")
+        if args.retCache == 't': self.dumb_retirever_cache()
+        new_dataset = self.build_quest_json_full_file(questions, articles)
+        with open("test_file.json", 'w') as f:
+            json.dump(new_dataset, f)
 
     def ask_all(self, dataset, args):
         ground_truth = []
