@@ -164,7 +164,6 @@ class SOQAL:
         return pred
 
     def get_topk_docs_scores_cache(self,question):
-        #read dict from disk
         if question in self.retriever_cache:
             return self.retriever_cache[question]
         else:
@@ -175,19 +174,25 @@ class SOQAL:
 
     def dumb_retirever_cache(self):
         if self.retriever_cache["changed"] is True:
+            print("Saving retriever cache")
             file = open('retriever/docsCache.txt', 'wb+')
             pickle.dump(self.retriever_cache, file)
             file.close()
             self.retriever_cache["changed"] = False
+            print("Cache Saved")
 
     def load_retriever_cache(self):
+        print("Loading retrievr cache...")
         if not os.path.exists('retriever/docsCache.txt'):
             self.retriever_cache["changed"]=False
+            print("Cache file doesn't exist!")
             return
+        print("Loading retrievr cache...")
         dbfile = open('retriever/docsCache.txt', 'rb')     
         self.retriever_cache = pickle.load(dbfile)
         dbfile.close()
         self.retriever_cache["changed"]=False
+        print("Cache Loaded")
 
     def ask_all(self, dataset,args):
         ground_truth = []
