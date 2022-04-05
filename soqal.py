@@ -187,7 +187,6 @@ class SOQAL:
             self.retriever_cache["changed"]=False
             print("Cache file doesn't exist!")
             return
-        print("Loading retrievr cache...")
         dbfile = open('retriever/docsCache.txt', 'rb')     
         self.retriever_cache = pickle.load(dbfile)
         dbfile.close()
