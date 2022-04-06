@@ -57,8 +57,10 @@ class Preprocessor(object):
     """Write out the dataset as tfrecords."""
     dataset_name = "_".join(sorted([task.name for task in tasks]))
     dataset_name += "_" + split
+    print(self._config.init_checkpoint)
     tfrecords_path = os.path.join(self._config.init_checkpoint, "squadv1_dev.tfrecord")
     metadata_path = os.path.join(self._config.init_checkpoint, "squadv1_dev.metadata")
+    print("Path to tfrecords: ", tfrecords_path)
     batch_size = (self._config.train_batch_size if is_training else
                   self._config.eval_batch_size)
 
