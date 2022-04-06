@@ -34,7 +34,7 @@ from .model import optimization
 from .util import training_utils
 from .util import utils
 
-DATA_MODEL_DIR = '/mnt/427AB1F27AB1E339/CurrentSemester/NeuralArabicQuestionAnswering/DownloadedForGP/tfmodel/model/'
+DATA_MODEL_DIR = '/home/models/araelectra/model/'
 INIT_CHECKPOINT = DATA_MODEL_DIR + 'model/model.ckpt-957'
 
 class FinetuningModel(object):
@@ -218,8 +218,9 @@ def predict(dataset, model):
     model._tasks[0]._examples = {}
     try:
         os.remove(DATA_MODEL_DIR + 'data/dev.json')
-        shutil.rmtree(DATA_MODEL_DIR + 'tfrecords')
-        shutil.rmtree(DATA_MODEL_DIR + 'model/results')
+        utils.rmrf(DATA_MODEL_DIR + 'tfrecords')
+        utils.rmrf(DATA_MODEL_DIR + 'model/results')
+        print("Removed data directories")
     except Exception as err:
         print(err)
 
