@@ -2,7 +2,9 @@ import numpy as np
 import sys
 import pickle
 import json
+import os.path
 from bert.evaluate import *
+from araElectra.QA import QA
 
 
 def softmax(x):
@@ -12,11 +14,19 @@ def softmax(x):
 
 
 class SOQAL:
-    def __init__(self, retriever, reader, beta):
+    def __init__(self, retriever, reader, beta, preprocessor_model=None, aggregate_function='o'):
         self.retriever = retriever
         self.beta = beta
         self.reader = reader
-        self.retriever_cache={"changed":False}
+        self.retriever_cache = {"changed": False}
+        self.load_retriever_cache()
+        if preprocessor_model is not None:
+            print("Using preprocessing for context/question")
+            self.preprocessor = QA(preprocessor_model)
+        else:
+            print("Not using preprocessing!")
+            self.preprocessor = None
+        self.aggregate = aggregate_function
 
     def build_quest_json_full(self, questions, list_docs):
         articles = []
@@ -24,9 +34,10 @@ class SOQAL:
             paragraphs = []
             for article_id, article in enumerate(docs):
                 paragraph = {
-                    'context': article,
+                    'context': self.preprocessor.preprocess(article) if self.preprocessor is not None else article,
                     'qas': [{
-                        'question': questions[question_index],
+                        'question': self.preprocessor.preprocess(
+                            questions[question_index]) if self.preprocessor is not None else questions[question_index],
                         'id': "{qid}_{aid}".format(qid=question_index, aid=article_id),
                         'answers': [{
                             'text': "",
@@ -109,12 +120,13 @@ class SOQAL:
             # pick the first as the highest, better to pick all
             for j in range(0, min(1, len(predictions_raw))):
                 pred = predictions_raw[key][j]
-                pred_score = pred['start_logit'] * pred['end_logit']
+                pred_score = pred['start_logit'] + pred['end_logit']
                 pred_answer = pred['text']
                 while len(answers_text[question_id]) <= article_id:
                     answers_text[question_id].append("")
                     answers_scores[question_id].append(0)
-                answers_text[question_id][article_id] = pred_answer
+                answers_text[question_id][article_id] = self.preprocessor.unpreprocess(pred_answer) \
+                    if self.preprocessor is not None else pred_answer
                 answers_scores[question_id][article_id] = pred_score
         return answers_text, answers_scores
 
@@ -126,7 +138,7 @@ class SOQAL:
             # pick the first as the highest, better to pick all
             for j in range(0, min(1, len(predictions_raw))):
                 pred = predictions_raw[doc_ques_id][j]
-                pred_score = pred['start_logit'] * pred['end_logit']
+                pred_score = pred['start_logit'] + pred['end_logit']
                 pred_answer = pred['text']
                 answers_text.append(pred_answer)
                 answers_scores.append(pred_score)
@@ -152,32 +164,63 @@ class SOQAL:
         print("aggregated answers here")
         print(pred)
         return pred
-    
+
     def get_topk_docs_scores_cache(self,question):
-        #read dict from disk
         if question in self.retriever_cache:
             return self.retriever_cache[question]
-        else:    
+        else:
             docs, doc_scores = self.retriever.get_topk_docs_scores(question)
-            self.retriever_cache[question]=[docs,doc_scores]
-            self.retriever_cache["changed"]=True
-        return docs,doc_scores
+            self.retriever_cache[question] = [docs, doc_scores]
+            self.retriever_cache["changed"] = True
+        return docs, doc_scores
 
     def dumb_retirever_cache(self):
         if self.retriever_cache["changed"] is True:
+            print("Saving retriever cache")
             file = open('retriever/docsCache.txt', 'wb+')
-            pickle.dump(self.retriever_cache, file)                     
-            file.close()    
-            self.retriever_cache["changed"]=False
+            pickle.dump(self.retriever_cache, file)
+            file.close()
+            self.retriever_cache["changed"] = False
+            print("Cache Saved")
 
     def load_retriever_cache(self):
-        # for reading also binary mode is important
-        dbfile = open('retriever/docsCache.txt', 'rb')     
+        print("Loading retrievr cache...")
+        if not os.path.exists('retriever/docsCache.txt'):
+            self.retriever_cache["changed"] = False
+            print("Cache file doesn't exist!")
+            return
+        dbfile = open('retriever/docsCache.txt', 'rb')
         self.retriever_cache = pickle.load(dbfile)
         dbfile.close()
-        self.retriever_cache["changed"]=False
+        self.retriever_cache["changed"] = False
+        print("Cache Loaded")
 
-    def ask_all(self, dataset,args):
+    def build_quest_json_full_file(self, questions, list_docs):
+        articles = []
+        for question_index, docs in enumerate(list_docs):
+            paragraphs = []
+            for article_id, article in enumerate(docs):
+                paragraph = {
+                    'context': self.preprocessor.preprocess(article) if self.preprocessor is not None else article,
+                    'qas': [{
+                        'question': self.preprocessor.preprocess(
+                            questions[question_index]) if self.preprocessor is not None else questions[question_index],
+                        'id': "{qid}_{aid}".format(qid=question_index, aid=article_id),
+                        'answers': [{
+                            'text': "",
+                            'answer_start': 0
+                        }]
+                    }]
+                }
+                paragraphs.append(paragraph)
+            article = {
+                'title': "prediction_{qid}".format(qid=question_index),
+                'paragraphs': paragraphs
+            }
+            articles.append(article)
+        return {"data": articles, "version": "1.1"}
+
+    def dump_new_dataset(self, args, dataset):
         ground_truth = []
         questions = []
         articles = []
@@ -188,15 +231,43 @@ class SOQAL:
                 for qa in paragraph['qas']:
                     questions.append(qa['question'])
                     ground_truth.append(qa['answers'][0]['text'])
-        if args.retCache == 't':self.load_retriever_cache()
+        if args.retCache == 't': self.load_retriever_cache()
         for count, question in enumerate(questions):
             print("Retrieving documents for question number {}".format(count))
-            if args.retCache == 't':docs, doc_scores = self.get_topk_docs_scores_cache(question)
-            else:docs, doc_scores = self.retriever.get_topk_docs_scores(question)
+            if args.retCache == 't':
+                docs, doc_scores = self.get_topk_docs_scores_cache(question)
+            else:
+                docs, doc_scores = self.retriever.get_topk_docs_scores(question)
             articles.append(docs)
             articles_scores.append(doc_scores)
         print("Finished Retrieving documents")
-        if args.retCache == 't':self.dumb_retirever_cache()
+        if args.retCache == 't': self.dumb_retirever_cache()
+        new_dataset = self.build_quest_json_full_file(questions, articles)
+        with open("test_file.json", 'w') as f:
+            json.dump(new_dataset, f)
+
+    def ask_all(self, dataset, args):
+        ground_truth = []
+        questions = []
+        articles = []
+        articles_scores = []
+        print("Retrieving Questions!")
+        for article in dataset:
+            for paragraph in article['paragraphs']:
+                for qa in paragraph['qas']:
+                    questions.append(qa['question'])
+                    ground_truth.append(qa['answers'][0]['text'])
+        if args.retCache == 't': self.load_retriever_cache()
+        for count, question in enumerate(questions):
+            print("Retrieving documents for question number {}".format(count))
+            if args.retCache == 't':
+                docs, doc_scores = self.get_topk_docs_scores_cache(question)
+            else:
+                docs, doc_scores = self.retriever.get_topk_docs_scores(question)
+            articles.append(docs)
+            articles_scores.append(doc_scores)
+        print("Finished Retrieving documents")
+        if args.retCache == 't': self.dumb_retirever_cache()
         new_dataset = self.build_quest_json_full(questions, articles)
         print("Answering")
         answers_list = self.reader.predict_batch(new_dataset)
@@ -216,7 +287,13 @@ class SOQAL:
             exact_match_max_3 = 0
             f1_max_5 = 0
             exact_match_max_5 = 0
-            predictions = self.bert_agreggate(answers[j], answers_scores[j], articles_scores[j])
+            if self.aggregate == 'o':
+                print("Using old aggregate with beta")
+                predictions = self.bert_agreggate(answers[j], answers_scores[j], articles_scores[j])
+            else:
+                print("Using new aggregate")
+                predictions = self.electra_agreggate(answers[j], answers_scores[j], articles_scores[j])
+
             for i in range(len(predictions)):
                 if i < 1:
                     exact_match_max_1 = max(exact_match_max_1, exact_match_score(predictions[i], ground_truth[j]))

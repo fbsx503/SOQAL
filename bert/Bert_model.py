@@ -23,9 +23,7 @@ import json
 import math
 import os
 import random
-import modeling
-import optimization
-import tokenization
+from bert import modeling, optimization, tokenization
 import six
 import tensorflow as tf
 
@@ -33,7 +31,7 @@ import tensorflow as tf
 train_file = None,
 predict_file = ""
 do_lower_case = False
-max_seq_length = 384
+max_seq_length = 512
 doc_stride = 128
 max_query_length = 64
 do_train = False
