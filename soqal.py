@@ -1,10 +1,15 @@
 import numpy as np
 import sys
 import pickle
+
 import json
+import os
+
+sys.path.append(os.path.abspath("araelectratf"))
 import os.path
 from bert.evaluate import *
 from araElectra.QA import QA
+from araelectratf.run_finetuning import *
 
 
 def softmax(x):
@@ -220,7 +225,7 @@ class SOQAL:
             articles.append(article)
         return {"data": articles, "version": "1.1"}
 
-    def dump_new_dataset(self, args, dataset):
+    def dump_new_dataset(self, args, dataset, dest):
         ground_truth = []
         questions = []
         articles = []
@@ -243,9 +248,82 @@ class SOQAL:
         print("Finished Retrieving documents")
         if args.retCache == 't': self.dumb_retirever_cache()
         new_dataset = self.build_quest_json_full_file(questions, articles)
-        with open("test_file.json", 'w') as f:
+        with open(dest, 'w') as f:
             json.dump(new_dataset, f)
 
+    def test_electra(self, args, dataset, dest, model):
+        ground_truth = []
+        questions = []
+        articles = []
+        articles_scores = []
+        print("Retrieving Questions!")
+        for article in dataset:
+            for paragraph in article['paragraphs']:
+                for qa in paragraph['qas']:
+                    questions.append(qa['question'])
+                    ground_truth.append(qa['answers'][0]['text'])
+        if args.retCache == 't': self.load_retriever_cache()
+        for count, question in enumerate(questions):
+            print("Retrieving documents for question number {}".format(count))
+            if args.retCache == 't':
+                docs, doc_scores = self.get_topk_docs_scores_cache(question)
+            else:
+                docs, doc_scores = self.retriever.get_topk_docs_scores(question)
+            articles.append(docs)
+            articles_scores.append(doc_scores)
+        print("Finished Retrieving documents")
+        if args.retCache == 't': self.dumb_retirever_cache()
+        new_dataset = self.build_quest_json_full_file(questions, articles)
+        with open(dest, 'w') as f:
+            json.dump(new_dataset, f)
+        print("Answering")
+        answers_raw = run_evaluation(model)
+        print("Aggregating")
+        answers, answers_scores = self.get_predictions_all(answers_raw)
+        question_no = len(articles)
+        exact_match_1 = 0
+        exact_match_3 = 0
+        exact_match_5 = 0
+        f1_1 = 0
+        f1_3 = 0
+        f1_5 = 0
+        for j in range(len(articles)):
+            exact_match_max_1 = 0
+            f1_max_1 = 0
+            f1_max_3 = 0
+            exact_match_max_3 = 0
+            f1_max_5 = 0
+            exact_match_max_5 = 0
+            if self.aggregate == 'o':
+                print("Using old aggregate with beta")
+                predictions = self.bert_agreggate(answers[j], answers_scores[j], articles_scores[j])
+            else:
+                print("Using new aggregate")
+                predictions = self.electra_agreggate(answers[j], answers_scores[j], articles_scores[j])
+
+            for i in range(len(predictions)):
+                if i < 1:
+                    exact_match_max_1 = max(exact_match_max_1, exact_match_score(predictions[i], ground_truth[j]))
+                    f1_max_1 = max(f1_max_1, f1_score(predictions[i], ground_truth[j]))
+                if i < 3:
+                    exact_match_max_3 = max(exact_match_max_3, exact_match_score(predictions[i], ground_truth[j]))
+                    f1_max_3 = max(f1_max_3, f1_score(predictions[i], ground_truth[j]))
+                if i < 5:
+                    exact_match_max_5 = max(exact_match_max_5, exact_match_score(predictions[i], ground_truth[j]))
+                    f1_max_5 = max(f1_max_5, f1_score(predictions[i], ground_truth[j]))
+
+            exact_match_1 += exact_match_max_1
+            f1_1 += f1_max_1
+            exact_match_3 += exact_match_max_3
+            f1_3 += f1_max_3
+            exact_match_5 += exact_match_max_5
+            f1_5 += f1_max_5
+        print("Final exact match score 1 = " + str(exact_match_1 / question_no))
+        print("Final exact match score 3 = " + str(exact_match_3 / question_no))
+        print("Final exact match score 5 = " + str(exact_match_5 / question_no))
+        print("Final f1 score 1 = " + str(f1_1 / question_no))
+        print("Final f3 score 1 = " + str(f1_3 / question_no))
+        print("Final f5 score 1 = " + str(f1_5 / question_no))
     def ask_all(self, dataset, args):
         ground_truth = []
         questions = []
