@@ -73,7 +73,7 @@ class SpanBasedQAScorer(scorer.Scorer):
     return self._total_loss / len(self._all_results)
 
   def _get_results(self):
-    self.write_predictions()
+    return self.write_predictions()
     if self._name == "squad":
       squad_official_eval.set_opts(self._config, self._split)
       squad_official_eval.main()
@@ -91,7 +91,6 @@ class SpanBasedQAScorer(scorer.Scorer):
     unique_id_to_result = {}
     for result in self._all_results:
       unique_id_to_result[result.unique_id] = result
-
     _PrelimPrediction = collections.namedtuple(  # pylint: disable=invalid-name
         "PrelimPrediction",
         ["feature_index", "start_index", "end_index", "start_logit",
@@ -100,11 +99,9 @@ class SpanBasedQAScorer(scorer.Scorer):
     all_predictions = collections.OrderedDict()
     all_nbest_json = collections.OrderedDict()
     scores_diff_json = collections.OrderedDict()
-
     for example in self._eval_examples:
       example_id = example.qas_id if "squad" in self._name else example.qid
       features = self._task.featurize(example, False, for_eval=True)
-
       prelim_predictions = []
       # keep track of the minimum score of null start+end of position 0
       score_null = 1000000  # large and positive
@@ -260,13 +257,7 @@ class SpanBasedQAScorer(scorer.Scorer):
 
       all_nbest_json[example_id] = nbest_json
 
-    utils.write_json(dict(all_predictions),
-                     self._config.qa_preds_file(self._name))
-    if self._v2:
-      utils.write_json({
-          k: float(v) for k, v in six.iteritems(scores_diff_json)},
-          self._config.qa_na_file(self._name))
-
+    return all_nbest_json
 
 def _get_best_indexes(logits, n_best_size):
   """Get the n-best logits from a list."""

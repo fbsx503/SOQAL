@@ -36,11 +36,9 @@ class FinetuningConfig(object):
         self.do_train = False  # train a model
         self.do_eval = True  # evaluate the model
         self.keep_all_models = True  # if False, only keep the last trial's ckpt
-        self.max_save = 10  # if False, only keep the last trial's ckpt
-
         # model
         self.model_size = "base"  # one of "small", "base", or "large"
-        self.task_names = ["squad"]  # which tasks to learn
+        self.task_names = ["squadv1"]  # which tasks to learn
         # override the default transformer hparams for the provided model size; see
         # modeling.BertConfig for the possible hparams and util.training_utils for
         # the defaults
@@ -49,17 +47,17 @@ class FinetuningConfig(object):
             if "model_hparam_overrides" in kwargs else {})
         self.embedding_size = None  # bert hidden size by default
         self.vocab_size = 64000   # number of tokens in the vocabulary
-        self.do_lower_case = True
+        self.do_lower_case = False
 
         # training
-        self.learning_rate = 1e-4
+        self.learning_rate = 2e-5
         self.weight_decay_rate = 0.01
         self.layerwise_lr_decay = 0.8  # if > 0, the learning rate for a layer is
         # lr * lr_decay^(depth - max_depth) i.e.,
         # shallower layers have lower learning rates
-        self.num_train_epochs = 1.0  # passes over the dataset during training
+        self.num_train_epochs = 3.0  # passes over the dataset during training
         self.warmup_proportion = 0.1  # how much of training to warm up the LR for
-        self.save_checkpoints_steps = 500
+        self.save_checkpoints_steps = 1000000
         self.iterations_per_loop = 1000
         self.use_tfrecords_if_existing = True  # don't make tfrecords and write them
         # to disc if existing ones are found
@@ -70,15 +68,15 @@ class FinetuningConfig(object):
         self.n_writes_test = 5  # write test set predictions for the first n trials
 
         # sizing
-        self.max_seq_length = 384
-        self.train_batch_size = 4
-        self.eval_batch_size = 1
-        self.predict_batch_size = 1
+        self.max_seq_length = 512
+        self.train_batch_size = 8
+        self.eval_batch_size = 32
+        self.predict_batch_size = 32
         self.double_unordered = True  # for tasks like paraphrase where sentence
         # order doesn't matter, train the model on
         # on both sentence orderings for each example
         # for qa tasks
-        self.max_query_length = 96   # max tokens in q as opposed to context
+        self.max_query_length = 64   # max tokens in q as opposed to context
         self.doc_stride = 128  # stride when splitting doc into multiple examples
         self.n_best_size = 1  # number of predictions per example to save
         self.max_answer_length = 30  # filter out answers longer than this length
@@ -88,13 +86,13 @@ class FinetuningConfig(object):
         self.answerable_weight = 0.5  # weight for answerability loss
         self.joint_prediction = True  # jointly predict the start and end positions
         # of the answer span
-        self.beam_size = 30  # beam size when doing joint predictions
+        self.beam_size = 20  # beam size when doing joint predictions
         self.qa_na_threshold = -2.75  # threshold for "no answer" when writing SQuAD
         # 2.0 test outputs
 
         # TPU settings
         self.use_tpu = False
-        self.num_tpu_cores = None
+        self.num_tpu_cores = 1
         self.tpu_job_name = None
         self.tpu_name = None  # cloud TPU to use for training
         self.tpu_zone = None  # GCE zone where the Cloud TPU is located in
@@ -105,11 +103,13 @@ class FinetuningConfig(object):
         pretrained_model_dir = os.path.join(data_dir, "model")
         self.raw_data_dir = os.path.join(data_dir, "data")
         self.vocab_file = os.path.join(pretrained_model_dir, "vocab.txt")
+        print("Vocab File is " + self.vocab_file)
         task_names_str = ",".join(
             kwargs["task_names"] if "task_names" in kwargs else self.task_names)
         self.init_checkpoint = None if self.debug else pretrained_model_dir
         self.model_dir = os.path.join(pretrained_model_dir, "finetuning_models",
                                       task_names_str + "_model")
+        print("model dir is " + self.model_dir)
         results_dir = os.path.join(pretrained_model_dir, "results")
         self.results_txt = os.path.join(results_dir,
                                         task_names_str + "_results.txt")
@@ -156,7 +156,7 @@ class FinetuningConfig(object):
             self.use_tfrecords_if_existing = False
             self.num_trials = 1
             self.iterations_per_loop = 1
-            self.train_batch_size = 8
+            self.train_batch_size = 32
             self.num_train_epochs = 3.0
             self.log_examples = True
 
@@ -168,3 +168,5 @@ class FinetuningConfig(object):
             if k not in self.__dict__:
                 raise ValueError("Unknown hparam " + k)
             self.__dict__[k] = v
+
+#python3 qa_predict.py --data-dir /mnt/427AB1F27AB1E339/CurrentSemester/NeuralArabicQuestionAnswering/DownloadedForGP/tfmodel/model/ --model-name tf-araelectra-base --hparams '{"model_size": "base", "task_names": ["squadv1"], "do_train": false,"save_checkpoints_steps": 1000000, "do_eval": true, "use_tpu": false, "use_tfrecords_if_existing": false, "learning_rate": 2e-5,  "train_batch_size": 8, "num_train_epochs": 0,"max_seq_length": 512,"doc_stride": 128, "do_lower_case": false}'

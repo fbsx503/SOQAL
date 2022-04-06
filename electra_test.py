@@ -5,8 +5,7 @@ import pickle
 from retriever.TfidfRetriever import *
 sys.path.append(os.path.abspath("bert"))
 from bert.evaluate import *
-from araElectra.QA import QA
-from araElectra.tf.Araelectra import Araelectra
+from araElectra.araelectra import araelectra
 from retriever.GoogleSearchRetriever import *
 from electra_full_json_builder import *
 
@@ -38,12 +37,13 @@ def accuracy_full_system(AI,dataset):
 
 def accuracy_system(AI):
     dataset_path = "data/arcd-test-big-context-bertv02.json"
+    #dataset_path = "data/arcd.json"
     accuracy_full_system(AI, dataset_path)
 
 
 
 def main():
-    red = Araelectra()
+    red = araelectra()
     accuracy_system(red)
 
 

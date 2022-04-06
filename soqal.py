@@ -11,7 +11,6 @@ from bert.evaluate import *
 from araElectra.QA import QA
 from araelectratf.run_finetuning import *
 
-
 def softmax(x):
     """Compute softmax values for each sets of scores in x."""
     e_x = np.exp(x - np.max(x))
@@ -393,8 +392,8 @@ class SOQAL:
         print("Final exact match score 3 = " + str(exact_match_3 / question_no))
         print("Final exact match score 5 = " + str(exact_match_5 / question_no))
         print("Final f1 score 1 = " + str(f1_1 / question_no))
-        print("Final f3 score 1 = " + str(f1_3 / question_no))
-        print("Final f5 score 1 = " + str(f1_5 / question_no))
+        print("Final f1 score 3 = " + str(f1_3 / question_no))
+        print("Final f1 score 5 = " + str(f1_5 / question_no))
 
     def ask(self, quest):
         docs, doc_scores = self.retriever.get_topk_docs_scores(quest)
@@ -425,9 +424,12 @@ class SOQAL:
         return answers
 
     def ask_araelectra(self, quest):
+        print("Fetching documents")
         docs, doc_scores = self.retriever.get_topk_docs_scores(quest)
         dataset = self.build_quest_json_araElectra(quest, docs)
+        print("Built Json document")
         total_result = self.reader.get_answer(dataset)
+        print("Got Results")
         answers = []
         answer_scores = []
         for result in total_result:
