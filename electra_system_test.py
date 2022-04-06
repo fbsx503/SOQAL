@@ -6,10 +6,9 @@ sys.path.append(os.path.abspath("retriever"))
 from retriever.TfidfRetriever import *
 sys.path.append(os.path.abspath("bert"))
 from bert.evaluate import *
-from araElectra.QA import QA
-from araElectra.tf.Araelectra import Araelectra
+from araElectra.araelectra import araelectra
 from retriever.GoogleSearchRetriever import *
-
+from retriever.CustomRetriever import *
 
 def accuracy_full_system(AI, dataset):
     with open(dataset) as f:
@@ -86,17 +85,18 @@ import  argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('-g', '--google', help='use tf-idf or google', required=True)
 parser.add_argument('-r', '--ret-path', help='Retriever Path', required=True)
+parser.add_argument('-w', '--wiki-path', help='Wikipedia Path', required=True)
 
 def main():
     args = parser.parse_args()
     if args.google == 't':
-        doc_number = 10
-        wiki_data = pickle.load(open(args.ret_path, "rb"))
-        ret = ApiGoogleSearchRetriever(wiki_data, doc_number)
+        base_r = pickle.load(open(args.ret_path, "rb"))
+        wiki_data = pickle.load(open(args.wiki_path, "rb"))
+        ret = CustomRetriever(base_r, wiki_data, 50, 10)
     else:
         base_r = pickle.load(open(args.ret_path, "rb"))
         ret = HierarchicalTfidf(base_r, 50, 50)
-    red = Araelectra()
+    red = araelectra()
     AI = SOQAL(ret, red, 0.999)
     accuracy_system(AI)
 

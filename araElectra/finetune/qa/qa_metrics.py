@@ -73,7 +73,7 @@ class SpanBasedQAScorer(scorer.Scorer):
     return self._total_loss / len(self._all_results)
 
   def _get_results(self):
-    self.write_predictions()
+    return self.write_predictions()
     if self._name == "squad":
       squad_official_eval.set_opts(self._config, self._split)
       squad_official_eval.main()
@@ -266,7 +266,7 @@ class SpanBasedQAScorer(scorer.Scorer):
       utils.write_json({
           k: float(v) for k, v in six.iteritems(scores_diff_json)},
           self._config.qa_na_file(self._name))
-
+    return all_nbest_json
 
 def _get_best_indexes(logits, n_best_size):
   """Get the n-best logits from a list."""

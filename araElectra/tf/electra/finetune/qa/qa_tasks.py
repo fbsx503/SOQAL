@@ -430,8 +430,7 @@ class QATask(task.Task):
         answer_mask *= tf.cast(features["segment_ids"], tf.float32)
         answer_mask += tf.one_hot(0, seq_length)
 
-        start_logits = tf.layers.dense(final_hidden, 1024, activation=modeling.gelu, name="s_logits_1")
-        start_logits = tf.squeeze(tf.layers.dense(start_logits, 1, name="s_logits_2"), -1)
+        start_logits = tf.squeeze(tf.layers.dense(final_hidden, 1), -1)
 
         start_top_log_probs = tf.zeros([batch_size, self.config.beam_size])
         start_top_index = tf.zeros([batch_size, self.config.beam_size], tf.int32)
@@ -470,13 +469,13 @@ class QATask(task.Task):
                 end_features = final_hidden
 
             final_repr = tf.concat([start_features, end_features], -1)
-            final_repr = tf.layers.dense(final_repr, 1024, activation=modeling.gelu, name="e_logits_1")
+            final_repr = tf.layers.dense(final_repr, 512, activation=modeling.gelu, name="qa_hidden")
 
             # if is_training:
             #     final_repr = tf.nn.dropout(final_repr, keep_prob=0.9)
 
             # batch, beam, length (batch, length when training)
-            end_logits = tf.squeeze(tf.layers.dense(final_repr, 1, name="e_logits_2"), -1)
+            end_logits = tf.squeeze(tf.layers.dense(final_repr, 1, name="qa_logits"), -1)
             if is_training:
                 # end_logits = tf.nn.dropout(end_logits, keep_prob=0.9)
                 end_logits += 1000.0 * (answer_mask - 1)

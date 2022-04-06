@@ -61,7 +61,6 @@ class ApiGoogleSearchRetriever:
         article_titles = []
         if "items" not in DATA:
             return None, None
-        print(self.k)
         for title in DATA["items"]:
             title_fixed = title['title'].replace(" - ويكيبيديا","")
             if title_fixed in self.docs:

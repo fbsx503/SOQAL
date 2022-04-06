@@ -29,7 +29,7 @@ import os
 import collections
 import tensorflow.compat.v1 as tf
 
-import configure_finetuning
+from ... import configure_finetuning
 
 
 def normalize_answer(s):
