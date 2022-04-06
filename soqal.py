@@ -351,7 +351,7 @@ class SOQAL:
         dataset = self.build_quest_json_araElectra(quest, docs)
         print("Built Json document")
         total_result = self.reader.get_answer(dataset)
-        Print("Got Results")
+        print("Got Results")
         answers = []
         answer_scores = []
         for result in total_result:
