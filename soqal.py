@@ -8,7 +8,7 @@ import os
 sys.path.append(os.path.abspath("araelectratf"))
 import os.path
 from bert.evaluate import *
-from araElectra.QA import QA
+from araElectra.pytorch.QA import QA
 from araelectratf.run_finetuning import *
 
 def softmax(x):
