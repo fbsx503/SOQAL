@@ -4,7 +4,6 @@ import pickle
 import json
 import os.path
 from bert.evaluate import *
-from araElectra.QA import QA
 
 
 def softmax(x):
