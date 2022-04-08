@@ -21,7 +21,7 @@ def accuracy_retriever(retriever, dataset):
         for paragraph in article['paragraphs']:
             for qa in paragraph['qas']:
                 for answer in qa['answers']:
-                    docs = retriever.get_topk_docs_scores(qa['question'])
+                    docs, _ = retriever.get_topk_docs_scores(qa['question'])
                     for doc in docs:
                         if doc.find(answer['text']) != -1:
                             found_answers += 1
