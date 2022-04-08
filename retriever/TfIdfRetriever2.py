@@ -1,5 +1,5 @@
 import numpy as np
-from farasa.stemmer import FarasaStemmer
+from tashaphyne.stemming import ArabicLightStemmer
 from nltk.corpus import stopwords
 from nltk.tokenize import WordPunctTokenizer
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -8,10 +8,9 @@ import pickle
 import argparse
 
 tokenizer = WordPunctTokenizer()
-stemmer = FarasaStemmer()
+stemmer = ArabicLightStemmer()
 stopwords = stopwords.words('arabic')
 SYMBOLS = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\"'
-DOCS_DELIMITER = " #### "
 
 
 def has_symbol(token):
@@ -27,7 +26,7 @@ def clean_string(doc):
     for token in doc_tokens:
         if token in stopwords or has_symbol(token):
             continue
-        cleaned_tokens.append(token)
+        cleaned_tokens.append(stemmer.light_stem(token))
     return " ".join(cleaned_tokens)
 
 
@@ -35,11 +34,10 @@ def stem_all_docs(docs):
     cleaned_docs = []
     for (i, doc) in enumerate(docs):
         cleaned_docs.append(clean_string(doc))
+        if (i % 40000) == 0:
+            print("Finised {:.2f}".format(1.00 * i / len(docs)))
     print("Finished Cleaning")
-    all_docs_as_string = DOCS_DELIMITER.join(cleaned_docs)
-    print("Finished Concatenating")
-    stemmed_docs = stemmer.stem(all_docs_as_string)
-    return stemmed_docs.split(DOCS_DELIMITER)
+    return cleaned_docs
 
 
 class TfidfRetriever:
@@ -51,7 +49,7 @@ class TfidfRetriever:
         print("Finished TFIDF fit-transform")
 
     def get_topk_docs_scores(self, query):
-        query = stemmer.stem(clean_string(query))
+        query = clean_string(query)
         query_tfidf = self.vectorizer.transform([query])
         similarities_raw = linear_kernel(self.tfidf_matrix, query_tfidf)
         similarities = []
