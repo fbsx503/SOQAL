@@ -7,6 +7,8 @@ import os
 
 sys.path.append(os.path.abspath("araelectratf"))
 import os.path
+from retriever.CustomRetriever import *
+
 from bert.evaluate import *
 from araElectra.pytorch.QA import QA
 from araelectratf.run_finetuning import *
@@ -23,6 +25,10 @@ class SOQAL:
         self.beta = beta
         self.reader = reader
         self.retriever_cache = {"changed": False}
+        if isinstance(retriever,CustomRetriever):
+            self.retriever_cache_path='retriever/docsCacheGoogle.txt'
+        else:
+            self.retriever_cache_path='retriever/docsCache.txt'
         self.load_retriever_cache()
         if preprocessor_model is not None:
             print("Using preprocessing for context/question")
@@ -181,7 +187,7 @@ class SOQAL:
     def dumb_retirever_cache(self):
         if self.retriever_cache["changed"] is True:
             print("Saving retriever cache")
-            file = open('retriever/docsCache.txt', 'wb+')
+            file = open(self.retriever_cache_path, 'wb+')
             pickle.dump(self.retriever_cache, file)
             file.close()
             self.retriever_cache["changed"] = False
@@ -189,11 +195,11 @@ class SOQAL:
 
     def load_retriever_cache(self):
         print("Loading retrievr cache...")
-        if not os.path.exists('retriever/docsCache.txt'):
+        if not os.path.exists(self.retriever_cache_path):
             self.retriever_cache["changed"] = False
             print("Cache file doesn't exist!")
             return
-        dbfile = open('retriever/docsCache.txt', 'rb')
+        dbfile = open(self.retriever_cache_path, 'rb')
         self.retriever_cache = pickle.load(dbfile)
         dbfile.close()
         self.retriever_cache["changed"] = False

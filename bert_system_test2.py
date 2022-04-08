@@ -6,6 +6,8 @@ import pickle
 sys.path.append(os.path.abspath("retriever"))
 from retriever.TfidfRetriever import *
 from retriever.GoogleSearchRetriever import *
+from retriever.CustomRetriever import *
+
 
 sys.path.append(os.path.abspath("bert"))
 from bert.Bert_model import BERT_model
@@ -95,14 +97,16 @@ parser.add_argument('-r', '--ret-path', help='Retriever Path', required=False, d
 parser.add_argument('-rc', '--retCache', help='Retriever cache', required=False, default='t')
 parser.add_argument('-pm', '--pre-model', help='Preprocess model', required=False, default=None)
 parser.add_argument('-a', '--aggregate', help='Aggregate function', required=False, default='o')
+parser.add_argument('-w', '--wiki-path', help='Wikipedia Path', required=True)
+
 
 
 def main():
     args = parser.parse_args()
     if args.google == 't':
-        doc_number = 10
-        wiki_data = pickle.load(open(args.ret_path, "rb"))
-        ret = ApiGoogleSearchRetriever(wiki_data, doc_number)
+        base_r = pickle.load(open(args.ret_path, "rb"))
+        wiki_data = pickle.load(open(args.wiki_path, "rb"))
+        ret = CustomRetriever(base_r, wiki_data, 50, 10)
     else:
         base_r = pickle.load(open(args.ret_path, "rb"))
         ret = HierarchicalTfidf(base_r, 50, 50)
