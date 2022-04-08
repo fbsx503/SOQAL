@@ -1,7 +1,5 @@
 import json
-import random
 import pickle
-from TfidfRetriever import TfidfRetriever, HierarchicalTfidf
 import sys, os
 
 sys.path.append(os.path.abspath("../embedding"))
