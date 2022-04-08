@@ -11,6 +11,7 @@ tokenizer = WordPunctTokenizer()
 stemmer = FarasaStemmer()
 stopwords = stopwords.words('arabic')
 SYMBOLS = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\"'
+DOCS_DELIMITER = " #### "
 
 
 def has_symbol(token):
@@ -20,21 +21,25 @@ def has_symbol(token):
     return False
 
 
-def stem_string(doc):
+def clean_string(doc):
     doc_tokens = tokenizer.tokenize(doc)
-    stemmed_tokens = []
+    cleaned_tokens = []
     for token in doc_tokens:
         if token in stopwords or has_symbol(token):
             continue
-        stemmed_tokens.append(stemmer.stem(token))
-    return " ".join(stemmed_tokens)
+        cleaned_tokens.append(token)
+    return " ".join(cleaned_tokens)
 
 
 def stem_all_docs(docs):
-    stemmed_docs = []
-    for doc in docs:
-        stemmed_docs.append(stem_string(doc))
-    return stemmed_docs
+    cleaned_docs = []
+    for (i, doc) in enumerate(docs):
+        cleaned_docs.append(clean_string(doc))
+    print("Finished Cleaning")
+    all_docs_as_string = DOCS_DELIMITER.join(cleaned_docs)
+    print("Finished Concatenating")
+    stemmed_docs = stemmer.stem(all_docs_as_string)
+    return stemmed_docs.split(DOCS_DELIMITER)
 
 
 class TfidfRetriever:
@@ -43,9 +48,10 @@ class TfidfRetriever:
         self.docs = all_docs
         self.vectorizer = TfidfVectorizer(ngram_range=(1, ngrams), norm=None, stop_words=stopwords)
         self.tfidf_matrix = self.vectorizer.fit_transform(self.docs)
+        print("Finished TFIDF fit-transform")
 
     def get_topk_docs_scores(self, query):
-        query = stem_string(query)
+        query = stemmer.stem(clean_string(query))
         query_tfidf = self.vectorizer.transform([query])
         similarities_raw = linear_kernel(self.tfidf_matrix, query_tfidf)
         similarities = []
@@ -83,6 +89,7 @@ def build_hierarchical_tfidf(wiki_path, output_path, ngrams_1, ngrams_2, top_k_1
     print("finished building documents")
     print("Stemming Docs")
     docs = stem_all_docs(docs)
+    print("Finished Stemming Docs")
     r = HierarchicalTfidf(top_k_1, top_k_2, docs, ngrams_1, ngrams_2)
     pickle.dump(r, open(output_path + "/hierarchical_tfidf.p", "wb"))
 
