@@ -6,7 +6,7 @@ import numpy as np
 import requests
 import json
 import urllib
-
+import time
 
 class ScrapGoogleSearchRetriever:
     """
@@ -49,11 +49,61 @@ class ApiGoogleSearchRetriever:
         # custom search engine ID, need to create on cloud shell
         self.CSE = "58eb65c4e6c2f7475"
         # API KEY for custom search
-        self.API_KEY = "AIzaSyCA0yux8A0dX6Hmlgx26iDDud-tj36TEsI"
+        self.API_KEY = "AIzaSyAkMBueIbfULlplc0qVZiIFDsrWpD0tfV0"
+
+    def get_topk_docs_scores_merged(self, query):
+        query = urllib.parse.quote_plus(query)
+        DATA = {}
+        id = 0
+        while "items" not in DATA:
+            if id > 0:
+                print("retrieving failed ... \n Retrying")
+                time.sleep(0.5)
+            if id == 30:
+                break
+            url = "https://www.googleapis.com/customsearch/v1/siterestrict?q=" + str(query) + "&cx=" + self.CSE \
+                  + "&num=" + str(self.k) + "&siteSearch=ar.wikipedia.org&key=" + self.API_KEY
+            S = requests.Session()
+            R = S.get(url=url, verify=False)
+            DATA = R.json()
+            id += 1
+        article_titles = []
+        if "items" not in DATA:
+            return None, None
+        for title in DATA["items"]:
+            title_fixed = title['title'].replace(" - ويكيبيديا", "")
+            if title_fixed in self.docs:
+                article_titles.append(title_fixed)
+        top_docs = []
+        docs_scores = []
+        rank = 1
+        paragraphs = {}
+
+        for title in article_titles[:min(self.k, len(article_titles))]:
+            paragraphs[title] = ""
+
+        for title in article_titles[:min(self.k, len(article_titles))]:
+            if title in self.docs:
+                for par in self.docs[title][:15]:
+                    if len(par) >= 50:
+                        if len(paragraphs[title]) == 0:
+                            docs_scores.append(1 / rank)
+                        paragraphs[title] += par
+
+            rank += 1
+        for title in article_titles[:min(self.k, len(article_titles))]:
+            top_docs.append(paragraphs[title])
+
+        norm_cst = np.sum(1 / np.arange(1, rank))
+        docs_scores = np.asarray(docs_scores)
+        docs_scores = docs_scores / norm_cst
+        if len(top_docs) < 1:
+            print("Help me I didn't find any docs")
+        return top_docs, docs_scores
 
     def get_topk_docs_scores(self, query):
         query = urllib.parse.quote_plus(query)
-        url = "https://www.googleapis.com/customsearch/v1/siterestrict?q=" + str(query) + "&cx=" + self.CSE\
+        url = "https://www.googleapis.com/customsearch/v1/siterestrict?q=" + str(query) + "&cx=" + self.CSE \
               + "&num=" + str(self.k) + "&siteSearch=ar.wikipedia.org&key=" + self.API_KEY
         S = requests.Session()
         R = S.get(url=url, verify=False)
@@ -62,7 +112,7 @@ class ApiGoogleSearchRetriever:
         if "items" not in DATA:
             return None, None
         for title in DATA["items"]:
-            title_fixed = title['title'].replace(" - ويكيبيديا","")
+            title_fixed = title['title'].replace(" - ويكيبيديا", "")
             if title_fixed in self.docs:
                 article_titles.append(title_fixed)
         top_docs = []
@@ -73,14 +123,15 @@ class ApiGoogleSearchRetriever:
                 for par in self.docs[title][:15]:
                     if len(par) >= 50:
                         top_docs.append(par)
-                        docs_scores.append(1/rank)
+                        docs_scores.append(1 / rank)
             rank += 1
-        norm_cst = np.sum(1/np.arange(1,rank))
+        norm_cst = np.sum(1 / np.arange(1, rank))
         docs_scores = np.asarray(docs_scores)
         docs_scores = docs_scores / norm_cst
         if len(top_docs) < 1:
             print("Help me I didn't find any docs")
         return top_docs, docs_scores
+
 
     def get_topk_docs(self, query):
         query = urllib.parse.quote_plus(query)
@@ -108,4 +159,3 @@ def test_GoogleSearchRetriever():
     wiki_data = pickle.load(open("../arwiki/arwiki.p","rb"))
     r = ApiGoogleSearchRetriever(wiki_data,5)
     print(r.get_topk_docs_scores("في اي عام كان رفع معدل النمو ل 2.2%"))
-
