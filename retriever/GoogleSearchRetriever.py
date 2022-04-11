@@ -103,11 +103,20 @@ class ApiGoogleSearchRetriever:
 
     def get_topk_docs_scores(self, query):
         query = urllib.parse.quote_plus(query)
-        url = "https://www.googleapis.com/customsearch/v1/siterestrict?q=" + str(query) + "&cx=" + self.CSE \
-              + "&num=" + str(self.k) + "&siteSearch=ar.wikipedia.org&key=" + self.API_KEY
-        S = requests.Session()
-        R = S.get(url=url, verify=False)
-        DATA = R.json()
+        DATA = {}
+        id = 0
+        while "items" not in DATA:
+            if id > 0:
+                print("retrieving failed ... \n Retrying")
+                time.sleep(0.5)
+            if id == 30:
+                break
+            url = "https://www.googleapis.com/customsearch/v1/siterestrict?q=" + str(query) + "&cx=" + self.CSE \
+                  + "&num=" + str(self.k) + "&siteSearch=ar.wikipedia.org&key=" + self.API_KEY
+            S = requests.Session()
+            R = S.get(url=url, verify=False)
+            DATA = R.json()
+            id += 1
         article_titles = []
         if "items" not in DATA:
             return None, None
