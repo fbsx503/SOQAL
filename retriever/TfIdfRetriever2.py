@@ -36,11 +36,15 @@ def stem_all_docs(docs):
 
 
 class TfidfRetriever:
-    def __init__(self, top_k_docs, all_docs, ngrams):
+    def __init__(self, top_k_docs, all_docs, ngrams_1, ngrams_2, cleaned_docs=None):
         self.top_k_docs = top_k_docs
         self.docs_cpy = all_docs
-        self.docs_stemmed = stem_all_docs(all_docs)
-        self.vectorizer = TfidfVectorizer(ngram_range=(1, ngrams), norm=None, stop_words=stopwords, lowercase=False)
+        if cleaned_docs is None:
+            self.docs_stemmed = stem_all_docs(all_docs)
+        else:
+            self.docs_stemmed = cleaned_docs
+        self.vectorizer = TfidfVectorizer(ngram_range=(ngrams_1, ngrams_2), norm=None, stop_words=stopwords,
+                                          lowercase=False)
         self.tfidf_matrix = self.vectorizer.fit_transform(self.docs_stemmed)
         print("Finished TFIDF fit-transform")
 
@@ -65,32 +69,34 @@ class TfidfRetriever:
 
 
 class HierarchicalTfidf:
-    def __init__(self, base_retriever, ngrams_2, top_k_docs_2):
+    def __init__(self, base_retriever, ngrams_1, ngrams_2, top_k_docs_2):
         self.base_retriever = base_retriever
+        self.ngrams_1 = ngrams_1
         self.ngrams_2 = ngrams_2
         self.top_k_docs_2 = top_k_docs_2
 
     def get_topk_docs_scores(self, query):
         docs, _ = self.base_retriever.get_topk_docs_scores(query)
-        return TfidfRetriever(self.top_k_docs_2, docs, self.ngrams_2).get_topk_docs_scores(query)
+        return TfidfRetriever(self.top_k_docs_2, docs, self.ngrams_1, self.ngrams_2).get_topk_docs_scores(query)
 
 
-def build_tfidf(wiki_path, output_path, ngrams_1, top_k_1):
+def build_tfidf(wiki_path, output_path, ngrams_1, ngrams_2, top_k_1):
     wiki_data = pickle.load(open(wiki_path, "rb"))
+    stemmed_wiki = pickle.load(open("arwiki_cleaned.p", "rb"))
     docs = []
     for art, pars in wiki_data.items():
         docs.append(" ".join(pars))
-    print("finished building documents")
-    r = TfidfRetriever(top_k_1, docs, ngrams_1)
+    r = TfidfRetriever(top_k_1, docs, ngrams_1, ngrams_2, stemmed_wiki)
     pickle.dump(r, open(output_path, "wb"))
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-n1", "--ngrams_1", type=int, default=2, help="n-gram order")
-parser.add_argument("-k1", "--topk_1", type=int, default=50, help="number of documents retriever should return")
+parser.add_argument("-n1", "--ngrams_1", type=int, default=1, help="n-gram order")
+parser.add_argument("-n2", "--ngrams_2", type=int, default=2, help="n-gram order")
+parser.add_argument("-k", "--topk", type=int, default=350, help="number of documents retriever should return")
 parser.add_argument('-w', '--wiki-path', help='Path of arwiki.p', default="arwiki.p")
 parser.add_argument('-o', '--output-dir', help='Where to place the retrivers', default="tfidf_stem_retriever.p")
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    build_tfidf(args.wiki_path, args.output_dir, args.ngrams_1, args.topk_1)
+    build_tfidf(args.wiki_path, args.output_dir, args.ngrams_1, args.ngrams_2, args.topk)
