@@ -2,6 +2,7 @@ import numpy as np
 from nltk.stem.isri import ISRIStemmer
 from nltk.corpus import stopwords
 from nltk.tokenize import WordPunctTokenizer
+import pyarabic.araby as araby
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 import pickle
@@ -9,7 +10,7 @@ import argparse
 
 tokenizer = WordPunctTokenizer()
 stemmer = ISRIStemmer()
-stopwords = set(stopwords.words('arabic'))
+stopwords = set(araby.strip_diacritics(x) for x in stopwords.words('arabic'))
 SYMBOLS = set('!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\"')
 print(stopwords)
 print(SYMBOLS)
@@ -19,6 +20,7 @@ def clean_string(doc):
     doc_tokens = tokenizer.tokenize(doc)
     cleaned_tokens = []
     for token in doc_tokens:
+        token = araby.strip_diacritics(token)
         if token in stopwords or token in SYMBOLS:
             continue
         cleaned_tokens.append(stemmer.stem(token))
@@ -30,7 +32,7 @@ def stem_all_docs(docs):
     for (i, doc) in enumerate(docs):
         cleaned_docs.append(clean_string(doc))
         if (i % 40000) == 0:
-            print("Finised {:.2f}".format(100.00 * i / len(docs)))
+            print("Finished {:.2f}".format(100.00 * i / len(docs)))
     print("Finished Cleaning")
     return cleaned_docs
 
@@ -40,7 +42,7 @@ class TfidfRetriever:
         self.top_k_docs = top_k_docs
         self.docs_cpy = all_docs
         self.docs_stemmed = stem_all_docs(all_docs)
-        self.vectorizer = TfidfVectorizer(ngram_range=(1, ngrams), norm=None, stop_words=stopwords)
+        self.vectorizer = TfidfVectorizer(ngram_range=(1, ngrams), norm=None, stop_words=stopwords, lowercase=False)
         self.tfidf_matrix = self.vectorizer.fit_transform(self.docs_stemmed)
         print("Finished TFIDF fit-transform")
 
