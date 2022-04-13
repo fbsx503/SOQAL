@@ -40,7 +40,7 @@ class TfidfRetriever:
         self.top_k_docs = top_k_docs
         self.docs_cpy = all_docs
         self.docs_stemmed = stem_all_docs(all_docs)
-        self.vectorizer = TfidfVectorizer(ngram_range=(1, ngrams), norm=None, stop_words=stopwords, lowercase=False, )
+        self.vectorizer = TfidfVectorizer(ngram_range=(1, ngrams), norm=None, stop_words=stopwords, lowercase=False)
         self.tfidf_matrix = self.vectorizer.fit_transform(self.docs_stemmed)
         print("Finished TFIDF fit-transform")
 
