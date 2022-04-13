@@ -44,19 +44,21 @@ def accuracy_TfidfRetriever(ret_path):
     accuracy_retriever(r, dataset_path)
 
 
-def accuracy_Hierarchial_TfidfRetriever(ret_path, docs):
-    print("Evaluating Hierarchial TF-IDF Retriever ... {} DOCS".format(docs))
+def accuracy_Hierarchial_TfidfRetriever(ret_path, docs, ngrams):
+    print("Evaluating Hierarchial TF-IDF Retriever ... {} DOCS, {} ngrams".format(docs, ngrams))
     r = pickle.load(open(ret_path, "rb"))
     dataset_path = "../data/arcd.json"
-    accuracy_retriever(HierarchicalTfidf(r, 1, docs), dataset_path)
+    accuracy_retriever(HierarchicalTfidf(r, ngrams, docs), dataset_path)
 
 
 def main():
     args = parser.parse_args()
     print("Evaluating TF-IDF Retriever ...")
     accuracy_TfidfRetriever(args.ret_path)
-    accuracy_Hierarchial_TfidfRetriever(args.ret_path, 50)
-    accuracy_Hierarchial_TfidfRetriever(args.ret_path, 10)
+    accuracy_Hierarchial_TfidfRetriever(args.ret_path, 50, 1)
+    accuracy_Hierarchial_TfidfRetriever(args.ret_path, 10, 1)
+    accuracy_Hierarchial_TfidfRetriever(args.ret_path, 50, 4)
+    accuracy_Hierarchial_TfidfRetriever(args.ret_path, 10, 4)
 
 
 if __name__ == "__main__":
