@@ -54,7 +54,7 @@ def accuracy_Hierarchial_TfidfRetriever(ret_path, docs, ngrams):
 def main():
     args = parser.parse_args()
     print("Evaluating TF-IDF Retriever ...")
-    # accuracy_TfidfRetriever(args.ret_path)
+    accuracy_TfidfRetriever(args.ret_path)
     accuracy_Hierarchial_TfidfRetriever(args.ret_path, 15, 4)
     accuracy_Hierarchial_TfidfRetriever(args.ret_path, 15, 6)
     accuracy_Hierarchial_TfidfRetriever(args.ret_path, 15, 1)
