@@ -97,7 +97,8 @@ parser.add_argument('-r', '--ret-path', help='Retriever Path', required=False, d
 parser.add_argument('-rc', '--retCache', help='Retriever cache', required=False, default='t')
 parser.add_argument('-pm', '--pre-model', help='Preprocess model', required=False, default=None)
 parser.add_argument('-a', '--aggregate', help='Aggregate function', required=False, default='o')
-parser.add_argument('-w', '--wiki-path', help='Wikipedia Path', required=True)
+parser.add_argument('-w', '--wiki-path', help='Wikipedia Path', required=False, default = 'f')
+parser.add_argument('-md', '--merged', help='merge docs', required=False, default = 't')
 
 
 
@@ -106,7 +107,7 @@ def main():
     if args.google == 't':
         base_r = pickle.load(open(args.ret_path, "rb"))
         wiki_data = pickle.load(open(args.wiki_path, "rb"))
-        ret = CustomRetriever(base_r, wiki_data, 50, 10)
+        ret = CustomRetriever(base_r, wiki_data, 50, 10, args.merged)
     else:
         base_r = pickle.load(open(args.ret_path, "rb"))
         ret = HierarchicalTfidf(base_r, 50, 50)
