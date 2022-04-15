@@ -26,23 +26,23 @@ import os
 import six
 import tensorflow as tf
 
-import configure_finetuning
-from finetune import feature_spec
-from finetune import task
-from finetune.qa import qa_metrics
-from model import modeling
-from model import tokenization
-from util import utils
+from araelectratf import configure_finetuning
+from araelectratf.finetune import feature_spec
+from araelectratf.finetune import task
+from araelectratf.finetune.qa import qa_metrics
+from araelectratf.model import modeling
+from araelectratf.model import tokenization
+from araelectratf.util import utils
 
 
 class QAExample(task.Example):
-  """Question-answering example."""
+    """Question-answering example."""
 
-  def __init__(self,
-               task_name,
-               eid,
-               qas_id,
-               qid,
+    def __init__(self,
+                 task_name,
+                 eid,
+                 qas_id,
+                 qid,
                question_text,
                doc_tokens,
                orig_answer_text=None,

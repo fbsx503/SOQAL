@@ -22,10 +22,10 @@ from __future__ import print_function
 import abc
 from typing import List, Tuple
 
-import configure_finetuning
-from finetune import feature_spec
-from finetune import scorer
-from model import modeling
+from araelectratf import configure_finetuning
+from araelectratf.finetune import feature_spec
+from araelectratf.finetune import scorer
+from araelectratf.model import modeling
 
 
 class Example(object):

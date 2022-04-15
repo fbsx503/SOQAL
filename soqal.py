@@ -2,7 +2,7 @@ import numpy as np
 import sys
 import pickle
 
-import json
+import pprint
 import os
 
 sys.path.append(os.path.abspath("araelectratf"))
@@ -12,6 +12,7 @@ from retriever.CustomRetriever import *
 from bert.evaluate import *
 from araElectra.pytorch.QA import QA
 from araelectratf.run_finetuning import *
+
 
 def softmax(x):
     """Compute softmax values for each sets of scores in x."""
@@ -25,10 +26,11 @@ class SOQAL:
         self.beta = beta
         self.reader = reader
         self.retriever_cache = {"changed": False}
-        if isinstance(retriever,CustomRetriever):
-            self.retriever_cache_path='retriever/docsCacheGoogle.txt'
+        if isinstance(retriever, CustomRetriever):
+            self.retriever_cache_path = 'retriever/docsCacheGoogle.txt'
         else:
-            self.retriever_cache_path='retriever/docsCache.txt'
+            self.retriever_cache_path = 'retriever/docsCache.txt'
+        print(self.retriever_cache_path)
         self.load_retriever_cache()
         if preprocessor_model is not None:
             print("Using preprocessing for context/question")
@@ -171,11 +173,9 @@ class SOQAL:
         pred = []
         for k in range(0, min(5, len(ans_indx))):
             pred.append(answers_text[ans_indx[k]])
-        print("aggregated answers here")
-        print(pred)
         return pred
 
-    def get_topk_docs_scores_cache(self,question):
+    def get_topk_docs_scores_cache(self, question):
         if question in self.retriever_cache:
             return self.retriever_cache[question]
         else:
@@ -329,6 +329,89 @@ class SOQAL:
         print("Final f1 score 1 = " + str(f1_1 / question_no))
         print("Final f3 score 1 = " + str(f1_3 / question_no))
         print("Final f5 score 1 = " + str(f1_5 / question_no))
+
+    def aggregate_bert_all(self, answers, answers_scores, articles_scores, ground_truth):
+        question_no = len(articles_scores)
+        exact_match_1 = 0
+        exact_match_3 = 0
+        exact_match_5 = 0
+        f1_1 = 0
+        f1_3 = 0
+        f1_5 = 0
+        for j in range(len(articles_scores)):
+            exact_match_max_1 = 0
+            f1_max_1 = 0
+            f1_max_3 = 0
+            exact_match_max_3 = 0
+            f1_max_5 = 0
+            exact_match_max_5 = 0
+            predictions = self.bert_agreggate(answers[j], answers_scores[j], articles_scores[j])
+            for i in range(len(predictions)):
+                if i < 1:
+                    exact_match_max_1 = max(exact_match_max_1, exact_match_score(predictions[i], ground_truth[j]))
+                    f1_max_1 = max(f1_max_1, f1_score(predictions[i], ground_truth[j]))
+                if i < 3:
+                    exact_match_max_3 = max(exact_match_max_3, exact_match_score(predictions[i], ground_truth[j]))
+                    f1_max_3 = max(f1_max_3, f1_score(predictions[i], ground_truth[j]))
+                if i < 5:
+                    exact_match_max_5 = max(exact_match_max_5, exact_match_score(predictions[i], ground_truth[j]))
+                    f1_max_5 = max(f1_max_5, f1_score(predictions[i], ground_truth[j]))
+
+            exact_match_1 += exact_match_max_1
+            f1_1 += f1_max_1
+            exact_match_3 += exact_match_max_3
+            f1_3 += f1_max_3
+            exact_match_5 += exact_match_max_5
+            f1_5 += f1_max_5
+        return {"Aggregate": "BERT Old Aggregate",
+                "EM Top 1": str(100.00 * exact_match_1 / question_no),
+                "EM Top 3": str(100.00 * exact_match_3 / question_no),
+                "EM Top 5": str(100.00 * exact_match_5 / question_no),
+                "F1 Top 1": str(100.00 * f1_1 / question_no),
+                "F1 Top 3": str(100.00 * f1_3 / question_no),
+                "F1 Top 5": str(100.00 * f1_5 / question_no)}
+
+    def aggregate_electra_all(self, answers, answers_scores, articles_scores, ground_truth):
+        question_no = len(articles_scores)
+        exact_match_1 = 0
+        exact_match_3 = 0
+        exact_match_5 = 0
+        f1_1 = 0
+        f1_3 = 0
+        f1_5 = 0
+        for j in range(len(articles_scores)):
+            exact_match_max_1 = 0
+            f1_max_1 = 0
+            f1_max_3 = 0
+            exact_match_max_3 = 0
+            f1_max_5 = 0
+            exact_match_max_5 = 0
+            predictions = self.electra_agreggate(answers[j], answers_scores[j], articles_scores[j])
+            for i in range(len(predictions)):
+                if i < 1:
+                    exact_match_max_1 = max(exact_match_max_1, exact_match_score(predictions[i], ground_truth[j]))
+                    f1_max_1 = max(f1_max_1, f1_score(predictions[i], ground_truth[j]))
+                if i < 3:
+                    exact_match_max_3 = max(exact_match_max_3, exact_match_score(predictions[i], ground_truth[j]))
+                    f1_max_3 = max(f1_max_3, f1_score(predictions[i], ground_truth[j]))
+                if i < 5:
+                    exact_match_max_5 = max(exact_match_max_5, exact_match_score(predictions[i], ground_truth[j]))
+                    f1_max_5 = max(f1_max_5, f1_score(predictions[i], ground_truth[j]))
+
+            exact_match_1 += exact_match_max_1
+            f1_1 += f1_max_1
+            exact_match_3 += exact_match_max_3
+            f1_3 += f1_max_3
+            exact_match_5 += exact_match_max_5
+            f1_5 += f1_max_5
+        return {"Aggregate": "Electra New Aggregate",
+                "EM Top 1": str(100.00 * exact_match_1 / question_no),
+                "EM Top 3": str(100.00 * exact_match_3 / question_no),
+                "EM Top 5": str(100.00 * exact_match_5 / question_no),
+                "F1 Top 1": str(100.00 * f1_1 / question_no),
+                "F1 Top 3": str(100.00 * f1_3 / question_no),
+                "F1 Top 5": str(100.00 * f1_5 / question_no)}
+
     def ask_all(self, dataset, args):
         ground_truth = []
         questions = []
@@ -349,6 +432,7 @@ class SOQAL:
                 docs, doc_scores = self.retriever.get_topk_docs_scores(question)
             articles.append(docs)
             articles_scores.append(doc_scores)
+            assert len(docs) == len(doc_scores)
         print("Finished Retrieving documents")
         if args.retCache == 't': self.dumb_retirever_cache()
         new_dataset = self.build_quest_json_full(questions, articles)
@@ -356,50 +440,10 @@ class SOQAL:
         answers_list = self.reader.predict_batch(new_dataset)
         print("Aggregating")
         answers, answers_scores = self.get_predictions_all(answers_list)
-        question_no = len(articles)
-        exact_match_1 = 0
-        exact_match_3 = 0
-        exact_match_5 = 0
-        f1_1 = 0
-        f1_3 = 0
-        f1_5 = 0
-        for j in range(len(articles)):
-            exact_match_max_1 = 0
-            f1_max_1 = 0
-            f1_max_3 = 0
-            exact_match_max_3 = 0
-            f1_max_5 = 0
-            exact_match_max_5 = 0
-            if self.aggregate == 'o':
-                print("Using old aggregate with beta")
-                predictions = self.bert_agreggate(answers[j], answers_scores[j], articles_scores[j])
-            else:
-                print("Using new aggregate")
-                predictions = self.electra_agreggate(answers[j], answers_scores[j], articles_scores[j])
-
-            for i in range(len(predictions)):
-                if i < 1:
-                    exact_match_max_1 = max(exact_match_max_1, exact_match_score(predictions[i], ground_truth[j]))
-                    f1_max_1 = max(f1_max_1, f1_score(predictions[i], ground_truth[j]))
-                if i < 3:
-                    exact_match_max_3 = max(exact_match_max_3, exact_match_score(predictions[i], ground_truth[j]))
-                    f1_max_3 = max(f1_max_3, f1_score(predictions[i], ground_truth[j]))
-                if i < 5:
-                    exact_match_max_5 = max(exact_match_max_5, exact_match_score(predictions[i], ground_truth[j]))
-                    f1_max_5 = max(f1_max_5, f1_score(predictions[i], ground_truth[j]))
-
-            exact_match_1 += exact_match_max_1
-            f1_1 += f1_max_1
-            exact_match_3 += exact_match_max_3
-            f1_3 += f1_max_3
-            exact_match_5 += exact_match_max_5
-            f1_5 += f1_max_5
-        print("Final exact match score 1 = " + str(exact_match_1 / question_no))
-        print("Final exact match score 3 = " + str(exact_match_3 / question_no))
-        print("Final exact match score 5 = " + str(exact_match_5 / question_no))
-        print("Final f1 score 1 = " + str(f1_1 / question_no))
-        print("Final f1 score 3 = " + str(f1_3 / question_no))
-        print("Final f1 score 5 = " + str(f1_5 / question_no))
+        print(str(args))
+        print("Total Questions {}".format(len(articles)))
+        pprint.pprint(self.aggregate_bert_all(answers, answers_scores, articles_scores, ground_truth))
+        pprint.pprint(self.aggregate_electra_all(answers, answers_scores, articles_scores, ground_truth))
 
     def ask(self, quest):
         docs, doc_scores = self.retriever.get_topk_docs_scores(quest)

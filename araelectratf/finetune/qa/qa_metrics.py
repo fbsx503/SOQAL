@@ -23,13 +23,10 @@ import collections
 import numpy as np
 import six
 
-import configure_finetuning
-from finetune import scorer
-from finetune.qa import mrqa_official_eval
-from finetune.qa import squad_official_eval
-from finetune.qa import squad_official_eval_v1
-from model import tokenization
-from util import utils
+from araelectratf import configure_finetuning
+from araelectratf.finetune import scorer
+from araelectratf.model import tokenization
+from araelectratf.util import utils
 
 RawResult = collections.namedtuple("RawResult", [
     "unique_id", "start_logits", "end_logits", "answerable_logit",

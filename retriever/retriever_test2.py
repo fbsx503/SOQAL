@@ -56,10 +56,10 @@ def main():
     args = parser.parse_args()
     print("Evaluating TF-IDF Retriever ...")
     accuracy_TfidfRetriever(args.ret_path)
-    accuracy_Hierarchial_TfidfRetriever(args.ret_path, 15, 2, 2)
-    accuracy_Hierarchial_TfidfRetriever(args.ret_path, 15, 2, 3)
+    accuracy_Hierarchial_TfidfRetriever(args.ret_path, 15, 1, 6)
+    accuracy_Hierarchial_TfidfRetriever(args.ret_path, 15, 1, 5)
+    accuracy_Hierarchial_TfidfRetriever(args.ret_path, 15, 1, 4)
     accuracy_Hierarchial_TfidfRetriever(args.ret_path, 15, 2, 4)
-    accuracy_Hierarchial_TfidfRetriever(args.ret_path, 15, 1, 3)
 
 
 if __name__ == "__main__":

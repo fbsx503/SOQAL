@@ -22,7 +22,7 @@ from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 
-import configure_finetuning
+from araelectratf import configure_finetuning
 
 
 def get_shared_feature_specs(config: configure_finetuning.FinetuningConfig):

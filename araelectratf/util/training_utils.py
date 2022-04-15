@@ -24,8 +24,8 @@ import re
 import time
 import tensorflow as tf
 
-from model import modeling
-from util import utils
+from araelectratf.model import modeling
+from araelectratf.util import utils
 
 
 class ETAHook(tf.estimator.SessionRunHook):

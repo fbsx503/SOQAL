@@ -19,11 +19,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import configure_finetuning
-from finetune.classification import classification_tasks
-from finetune.qa import qa_tasks
-from finetune.tagging import tagging_tasks
-from model import tokenization
+from araelectratf import configure_finetuning
+from araelectratf.finetune.qa import qa_tasks
+from araelectratf.model import tokenization
 
 
 def get_tasks(config: configure_finetuning.FinetuningConfig):
@@ -36,23 +34,7 @@ def get_tasks(config: configure_finetuning.FinetuningConfig):
 def get_task(config: configure_finetuning.FinetuningConfig, task_name,
              tokenizer):
     """Get an instance of a task based on its name."""
-    if task_name == "cola":
-        return classification_tasks.CoLA(config, tokenizer)
-    elif task_name == "mrpc":
-        return classification_tasks.MRPC(config, tokenizer)
-    elif task_name == "mnli":
-        return classification_tasks.MNLI(config, tokenizer)
-    elif task_name == "sst":
-        return classification_tasks.SST(config, tokenizer)
-    elif task_name == "rte":
-        return classification_tasks.RTE(config, tokenizer)
-    elif task_name == "qnli":
-        return classification_tasks.QNLI(config, tokenizer)
-    elif task_name == "qqp":
-        return classification_tasks.QQP(config, tokenizer)
-    elif task_name == "sts":
-        return classification_tasks.STS(config, tokenizer)
-    elif task_name == "squad":
+    if task_name == "squad":
         return qa_tasks.SQuAD(config, tokenizer)
     elif task_name == "squadv1":
         return qa_tasks.SQuADv1(config, tokenizer)
@@ -64,7 +46,5 @@ def get_task(config: configure_finetuning.FinetuningConfig, task_name,
         return qa_tasks.TriviaQA(config, tokenizer)
     elif task_name == "searchqa":
         return qa_tasks.SearchQA(config, tokenizer)
-    elif task_name == "chunk":
-        return tagging_tasks.Chunking(config, tokenizer)
     else:
         raise ValueError("Unknown task " + task_name)

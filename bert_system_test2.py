@@ -82,7 +82,7 @@ def accuracy_full_system(AI, dataset, args):
 
 
 def accuracy_system(AI, args):
-    dataset_path = "data/tydiqa-goldp-dev-arabic.json"
+    dataset_path = "data/arcd-test.json"
     accuracy_full_system(AI, dataset_path, args)
 
 
@@ -96,7 +96,6 @@ parser.add_argument('-g', '--google', help='use tf-idf or google', required=Fals
 parser.add_argument('-r', '--ret-path', help='Retriever Path', required=False, default='retriever/tfidfretriever.p')
 parser.add_argument('-rc', '--retCache', help='Retriever cache', required=False, default='t')
 parser.add_argument('-pm', '--pre-model', help='Preprocess model', required=False, default=None)
-parser.add_argument('-a', '--aggregate', help='Aggregate function', required=False, default='o')
 parser.add_argument('-w', '--wiki-path', help='Wikipedia Path', required=False, default = 'f')
 parser.add_argument('-md', '--merged', help='merge docs', required=False, default = 't')
 
@@ -113,7 +112,7 @@ def main():
         ret = HierarchicalTfidf(base_r, 50, 50)
 
     red = BERT_model(args.config, args.vocab, args.output)
-    AI = SOQAL(ret, red, 0.999, args.pre_model, args.aggregate)
+    AI = SOQAL(ret, red, 0.999, args.pre_model)
     accuracy_system(AI, args)
 
 
