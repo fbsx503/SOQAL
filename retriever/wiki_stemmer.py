@@ -37,10 +37,14 @@ def stem_all_docs(docs):
 
 def clean_wiki(wiki_path):
     wiki_data = pickle.load(open(wiki_path, "rb"))
-    docs = []
+    docs_1 = []
+    docs_2 = []
     for art, pars in wiki_data.items():
-        docs.append(" ".join(pars))
-    pickle.dump(stem_all_docs(docs), open("arwiki_cleaned.p", "wb"))
+        for par in pars:
+            docs_1.append(par)
+        docs_2.append(" ".join(pars))
+    pickle.dump(stem_all_docs(docs_1), open("arwiki_cleaned_paragraphs.p", "wb"))
+    pickle.dump(stem_all_docs(docs_2), open("arwiki_cleaned_articles.p", "wb"))
 
 
 parser = argparse.ArgumentParser()
