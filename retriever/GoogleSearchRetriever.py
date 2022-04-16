@@ -2,6 +2,7 @@ import sys
 import pickle
 from urllib.parse import unquote
 from googlesearch import search
+from .TfidfRetriever import TfidfRetriever, HierarchicalTfidf
 import numpy as np
 import requests
 import json
@@ -38,7 +39,7 @@ class ApiGoogleSearchRetriever:
     """
     We call the official Google Custom Search API, need to obtain API Key first and CSE, $5 per 5000requests
     """
-    def __init__(self, docs, k=10):
+    def __init__(self, docs, k, base_retriever):
         """
         :param docs: dictionary form of Wikipedia
         :param k:  number of articles to return
@@ -46,12 +47,14 @@ class ApiGoogleSearchRetriever:
         self.k = min(k, 10) # API has max 10 results
         self.docs = docs
         id = 0
+        self.base_retriever = base_retriever
         # custom search engine ID, need to create on cloud shell
         self.CSE = "58eb65c4e6c2f7475"
         # API KEY for custom search
-        self.API_KEY = "AIzaSyAkMBueIbfULlplc0qVZiIFDsrWpD0tfV0"
+        self.API_KEY = "AIzaSyCiaYwBU6fziCgkSkRFFO0hBKIfUevctrY"
 
     def get_topk_docs_scores_merged(self, query):
+        original_query = query
         query = urllib.parse.quote_plus(query)
         DATA = {}
         id = 0
@@ -66,6 +69,7 @@ class ApiGoogleSearchRetriever:
             S = requests.Session()
             R = S.get(url=url, verify=False)
             DATA = R.json()
+            print(DATA)
             id += 1
         article_titles = []
         if "items" not in DATA:
@@ -75,8 +79,6 @@ class ApiGoogleSearchRetriever:
             if title_fixed in self.docs:
                 article_titles.append(title_fixed)
         top_docs = []
-        docs_scores = []
-        rank = 1
         paragraphs = {}
 
         for title in article_titles[:min(self.k, len(article_titles))]:
@@ -86,19 +88,16 @@ class ApiGoogleSearchRetriever:
             if title in self.docs:
                 for par in self.docs[title][:15]:
                     if len(par) >= 50:
-                        if len(paragraphs[title]) == 0:
-                            docs_scores.append(1 / rank)
                         paragraphs[title] += par
 
-            rank += 1
         for title in article_titles[:min(self.k, len(article_titles))]:
+            if len(paragraphs[title]) < 5:
+                continue
             top_docs.append(paragraphs[title])
 
-        norm_cst = np.sum(1 / np.arange(1, rank))
-        docs_scores = np.asarray(docs_scores)
-        docs_scores = docs_scores / norm_cst
-        if len(top_docs) < 1:
-            print("Help me I didn't find any docs")
+        r2 = TfidfRetriever(top_docs, len(top_docs), 4)
+        top_docs, docs_scores = r2.get_topk_docs_scores(original_query)
+        assert(len(top_docs) == len(docs_scores))
         return top_docs, docs_scores
 
     def get_topk_docs_scores(self, query):
@@ -125,20 +124,14 @@ class ApiGoogleSearchRetriever:
             if title_fixed in self.docs:
                 article_titles.append(title_fixed)
         top_docs = []
-        docs_scores = []
-        rank = 1
         for title in article_titles[:min(self.k, len(article_titles))]:
             if title in self.docs:
                 for par in self.docs[title][:15]:
                     if len(par) >= 50:
                         top_docs.append(par)
-                        docs_scores.append(1 / rank)
-            rank += 1
-        norm_cst = np.sum(1 / np.arange(1, rank))
-        docs_scores = np.asarray(docs_scores)
-        docs_scores = docs_scores / norm_cst
-        if len(top_docs) < 1:
-            print("Help me I didn't find any docs")
+        r2 = TfidfRetriever(top_docs, len(top_docs), 4)
+        top_docs, docs_scores = r2.get_topk_docs_scores(original_query)
+        assert(len(top_docs) == len(docs_scores))
         return top_docs, docs_scores
 
 
