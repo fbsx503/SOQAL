@@ -1,9 +1,6 @@
-import numpy as np
 from nltk.stem.isri import ISRIStemmer
 from nltk.corpus import stopwords
 from nltk.tokenize import WordPunctTokenizer
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import linear_kernel
 import pickle
 import argparse
 
@@ -43,8 +40,8 @@ def clean_wiki(wiki_path):
         for par in pars:
             docs_1.append(par)
         docs_2.append(" ".join(pars))
+    pickle.dump(docs_1, open("arwiki_paragraphs.p", "wb"))
     pickle.dump(stem_all_docs(docs_1), open("arwiki_cleaned_paragraphs.p", "wb"))
-    pickle.dump(stem_all_docs(docs_2), open("arwiki_cleaned_articles.p", "wb"))
 
 
 parser = argparse.ArgumentParser()

@@ -36,13 +36,13 @@ from araelectratf.util import utils
 
 
 class QAExample(task.Example):
-    """Question-answering example."""
+  """Question-answering example."""
 
-    def __init__(self,
-                 task_name,
-                 eid,
-                 qas_id,
-                 qid,
+  def __init__(self,
+               task_name,
+               eid,
+               qas_id,
+               qid,
                question_text,
                doc_tokens,
                orig_answer_text=None,

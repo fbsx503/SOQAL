@@ -31,12 +31,12 @@ from araelectratf.util import utils
 
 
 class Preprocessor(object):
-    """Class for loading, preprocessing, and serializing fine-tuning datasets."""
+  """Class for loading, preprocessing, and serializing fine-tuning datasets."""
 
-    def __init__(self, config: configure_finetuning.FinetuningConfig, tasks):
-        self._config = config
-        self._tasks = tasks
-        self._name_to_task = {task.name: task for task in tasks}
+  def __init__(self, config: configure_finetuning.FinetuningConfig, tasks):
+    self._config = config
+    self._tasks = tasks
+    self._name_to_task = {task.name: task for task in tasks}
 
     self._feature_specs = feature_spec.get_shared_feature_specs(config)
     for task in tasks:
@@ -78,7 +78,6 @@ class Preprocessor(object):
         examples += task_examples
       if is_training:
         random.shuffle(examples)
-      utils.mkdir(tfrecords_path.rsplit("/", 1)[0])
       n_examples = self.serialize_examples(
         examples, is_training, tfrecords_path, batch_size)
       utils.write_json({"n_examples": n_examples}, metadata_path)
@@ -94,6 +93,7 @@ class Preprocessor(object):
   def serialize_examples(self, examples, is_training, output_file, batch_size):
     """Convert a set of `InputExample`s to a TFRecord file."""
     n_examples = 0
+    print(output_file)
     with tf.io.TFRecordWriter(output_file) as writer:
       for (ex_index, example) in enumerate(examples):
         if ex_index % 2000 == 0:

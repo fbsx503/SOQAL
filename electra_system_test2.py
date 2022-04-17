@@ -1,4 +1,6 @@
 import os
+
+from retriever.CustomRetriever import CustomRetriever
 from soqal import SOQAL
 import sys
 import pickle
@@ -89,20 +91,21 @@ parser.add_argument('-g', '--google', help='use tf-idf or google', required=Fals
 parser.add_argument('-r', '--ret-path', help='Retriever Path', required=False, default='retriever/tfidfretriever.p')
 parser.add_argument('-rc', '--retCache', help='Retriever cache', required=False, default='t')
 parser.add_argument('-pm', '--pre-model', help='Preprocess model', required=False, default=None)
-parser.add_argument('-a', '--aggregate', help='Aggregate function', required=False, default='o')
+parser.add_argument('-w', '--wiki-path', help='Wikipedia Path', required=False, default='f')
+parser.add_argument('-md', '--merged', help='merge docs', required=False, default='t')
 
 
 def main():
     args = parser.parse_args()
     if args.google == 't':
-        doc_number = 10
-        wiki_data = pickle.load(open(args.ret_path, "rb"))
-        ret = ApiGoogleSearchRetriever(wiki_data, doc_number)
+        base_r = pickle.load(open(args.ret_path, "rb"))
+        wiki_data = pickle.load(open(args.wiki_path, "rb"))
+        ret = CustomRetriever(base_r, wiki_data, 50, 10, args.merged)
     else:
         base_r = pickle.load(open(args.ret_path, "rb"))
         ret = HierarchicalTfidf(base_r, 50, 50)
 
-    AI = SOQAL(ret, None, 0.999, args.pre_model, args.aggregate)
+    AI = SOQAL(ret, None, 0.999, args.pre_model)
     with open("data/tydiqa-goldp-dev-arabic.json") as f:
         dataset = json.load(f)['data']
     AI.test_electra(args, dataset, os.path.join(args.model, "dev.json"), args.model)
