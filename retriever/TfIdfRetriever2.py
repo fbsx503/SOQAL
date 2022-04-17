@@ -35,7 +35,7 @@ def stem_all_docs(docs):
     return cleaned_docs
 
 
-class TfidfRetriever:
+class Retriever:
     def __init__(self, top_k_docs, all_docs, ngrams_1, ngrams_2, cleaned_docs=None):
         self.top_k_docs = top_k_docs
         self.docs_cpy = all_docs
@@ -68,7 +68,7 @@ class TfidfRetriever:
         return top_docs, docs_scores
 
 
-class HierarchicalTfidf:
+class HierarchicalRetriever:
     def __init__(self, base_retriever, ngrams_1, ngrams_2, top_k_docs_2):
         self.base_retriever = base_retriever
         self.ngrams_1 = ngrams_1
@@ -77,13 +77,13 @@ class HierarchicalTfidf:
 
     def get_topk_docs_scores(self, query):
         docs, _ = self.base_retriever.get_topk_docs_scores(query)
-        return TfidfRetriever(self.top_k_docs_2, docs, self.ngrams_1, self.ngrams_2).get_topk_docs_scores(query)
+        return Retriever(self.top_k_docs_2, docs, self.ngrams_1, self.ngrams_2).get_topk_docs_scores(query)
 
 
 def build_tfidf(wiki_path, output_path, ngrams_1, ngrams_2, top_k_1):
     wiki_data = pickle.load(open(wiki_path, "rb"))
     stemmed_wiki = pickle.load(open("arwiki_cleaned.p", "rb"))
-    r = TfidfRetriever(top_k_1, wiki_data, ngrams_1, ngrams_2, stemmed_wiki)
+    r = Retriever(top_k_1, wiki_data, ngrams_1, ngrams_2, stemmed_wiki)
     pickle.dump(r, open(output_path, "wb"))
 
 
