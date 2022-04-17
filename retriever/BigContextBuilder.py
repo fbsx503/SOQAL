@@ -18,8 +18,6 @@ def get_big_context(retriever, dataset):
         for paragraph in article['paragraphs']:
             for qa in paragraph['qas']:
                 for answer in qa['answers']:
-                    if context_total == 12:
-                        continue
                     docs, _ = retriever.get_topk_docs_scores(qa['question'])
                     for doc in docs:
                         if doc.find(paragraph['context']) != -1:
