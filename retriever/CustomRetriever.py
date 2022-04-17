@@ -1,5 +1,5 @@
-from .GoogleSearchRetriever import ApiGoogleSearchRetriever
-from .TfidfRetriever import HierarchicalTfidf
+from GoogleSearchRetriever import ApiGoogleSearchRetriever
+from TfidfRetriever import HierarchicalTfidf
 
 class CustomRetriever:
     def __init__(self, base_retriever, wikipedia, k1, k2, m):

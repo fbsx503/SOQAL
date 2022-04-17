@@ -6,8 +6,8 @@ import random
 import sys
 import time
 
-from .CustomRetriever import *
-
+from CustomRetriever import *
+from TfidfRetriever import *
 
 def get_big_context(retriever, dataset):
     with open(dataset) as f:
@@ -18,6 +18,8 @@ def get_big_context(retriever, dataset):
         for paragraph in article['paragraphs']:
             for qa in paragraph['qas']:
                 for answer in qa['answers']:
+                    if context_total == 12:
+                        continue
                     docs, _ = retriever.get_topk_docs_scores(qa['question'])
                     for doc in docs:
                         if doc.find(paragraph['context']) != -1:
@@ -28,9 +30,9 @@ def get_big_context(retriever, dataset):
         print("Total Contexts So Far: " + str(context_total))
     print("Found context " + str(context_found))
     print("Total Contexts " + str(context_total))
-    with open("bigContext.json", "w") as f:
-        f.write(dataset)
-        f.close()
+    json_string = json.dumps({'data' : dataset})
+    with open("bigContext.json", "w") as f1:
+        f1.write(json_string)
 
 
 parser = argparse.ArgumentParser()

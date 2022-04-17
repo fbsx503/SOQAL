@@ -2,7 +2,7 @@ import sys
 import pickle
 from urllib.parse import unquote
 from googlesearch import search
-from .TfidfRetriever import TfidfRetriever, HierarchicalTfidf
+from TfidfRetriever import TfidfRetriever, HierarchicalTfidf
 import numpy as np
 import requests
 import json
@@ -69,7 +69,6 @@ class ApiGoogleSearchRetriever:
             S = requests.Session()
             R = S.get(url=url, verify=False)
             DATA = R.json()
-            print(DATA)
             id += 1
         article_titles = []
         if "items" not in DATA:
@@ -87,11 +86,10 @@ class ApiGoogleSearchRetriever:
         for title in article_titles[:min(self.k, len(article_titles))]:
             if title in self.docs:
                 for par in self.docs[title][:15]:
-                    if len(par) >= 50:
-                        paragraphs[title] += par
+                    paragraphs[title] += par
 
         for title in article_titles[:min(self.k, len(article_titles))]:
-            if len(paragraphs[title]) < 5:
+            if len(paragraphs[title]) < 20:
                 continue
             top_docs.append(paragraphs[title])
 
