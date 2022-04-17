@@ -9,6 +9,49 @@ import time
 from CustomRetriever import *
 from TfidfRetriever import *
 
+
+# move every question to a separate paragraph (ziad's version)
+def get_big_context_2(retriever, dataset_path, new_dataset_path):
+    new_data = []
+    with open(dataset_path, 'r') as f:
+        data = json.load(f)['data']
+    context_total = 0
+    context_found = 0
+
+    for article in data:
+        new_paragraphs = []
+        for paragraph in article['paragraphs']:
+            for qa in paragraph['qas']:
+                new_context = paragraph["context"]
+                docs, doc_scores = retriever.get_topk_docs_scores(qa['question'])
+                for doc in docs:
+                    if paragraph["context"] in doc:
+                        context_found += 1
+                        new_context = doc
+                        break
+
+                context_total += 1
+
+                new_paragraphs.append({
+                    "context": new_context,
+                    "qas": [qa]
+                })
+                print("Found context so far: " + str(context_found))
+                print("Total Contexts So Far: " + str(context_total))
+
+        new_article = {
+            "title": article["title"],
+            "paragraphs": new_paragraphs,
+        }
+        new_data.append(new_article)
+
+    print("Found context " + str(context_found))
+    print("Total Contexts " + str(context_total))
+
+    with open(new_dataset_path, 'w') as f:
+        json.dump({'data': new_data, 'version': '1.1.1'}, f, indent=4)
+
+
 def get_big_context(retriever, dataset):
     with open(dataset) as f:
         dataset = json.load(f)['data']
