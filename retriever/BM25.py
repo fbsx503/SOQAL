@@ -46,7 +46,7 @@ class BM25:
     def get_topk_docs_scores(self, query):
         query = clean_string(query)
         current_scores = self.bm25.get_scores(query.split(" "))
-        best_docs = sorted((e, i) for i, e in enumerate(current_scores))[::-1]
+        best_docs = [x for x, y in sorted(enumerate(current_scores), key=lambda x: x[1])][::-1]
         top_docs = []
         docs_scores = []
         for i in range(min(self.top_k_docs, len(best_docs))):

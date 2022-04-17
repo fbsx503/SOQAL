@@ -32,21 +32,27 @@ def stem_all_docs(docs):
     return cleaned_docs
 
 
-def clean_wiki(wiki_path):
+def clean_wiki(wiki_path, type):
     wiki_data = pickle.load(open(wiki_path, "rb"))
-    docs_1 = []
-    docs_2 = []
+    docs = []
+    if type == 'para':
+        print("Extracting paragraphs!")
+    else:
+        print("Extracting articles!")
     for art, pars in wiki_data.items():
-        for par in pars:
-            docs_1.append(par)
-        docs_2.append(" ".join(pars))
-    pickle.dump(docs_1, open("arwiki_paragraphs.p", "wb"))
-    pickle.dump(stem_all_docs(docs_1), open("arwiki_cleaned_paragraphs.p", "wb"))
+        if type == 'para':
+            for par in pars:
+                docs.append(par)
+        else:
+            docs.append(" ".join(pars))
+    pickle.dump(docs, open("arwiki_type_{}.p".format(type), "wb"))
+    pickle.dump(stem_all_docs(docs), open("arwiki_cleaned_type_{}.p".format(type), "wb"))
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-w', '--wiki-path', help='Path of arwiki.p', default="arwiki.p")
+parser.add_argument('-t', '--type', help='Paragraph/Article', default="para")
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    clean_wiki(args.wiki_path)
+    clean_wiki(args.wiki_path, args.type)
