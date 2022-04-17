@@ -6,7 +6,7 @@ class CustomRetriever:
         self.merged = m
         base_retriever.k = k1
         self.k = k2
-        self.gret = ApiGoogleSearchRetriever(wikipedia, k2)
+        self.gret = ApiGoogleSearchRetriever(wikipedia, k2, base_retriever)
         self.ret = HierarchicalTfidf(base_retriever, k1, k2)
 
     def get_topk_docs_scores(self, query):
