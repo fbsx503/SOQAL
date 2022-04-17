@@ -83,10 +83,7 @@ class HierarchicalTfidf:
 def build_tfidf(wiki_path, output_path, ngrams_1, ngrams_2, top_k_1):
     wiki_data = pickle.load(open(wiki_path, "rb"))
     stemmed_wiki = pickle.load(open("arwiki_cleaned.p", "rb"))
-    docs = []
-    for art, pars in wiki_data.items():
-        docs.append(" ".join(pars))
-    r = TfidfRetriever(top_k_1, docs, ngrams_1, ngrams_2, stemmed_wiki)
+    r = TfidfRetriever(top_k_1, wiki_data, ngrams_1, ngrams_2, stemmed_wiki)
     pickle.dump(r, open(output_path, "wb"))
 
 
