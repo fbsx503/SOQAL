@@ -8,7 +8,9 @@ import requests
 import json
 import urllib
 import time
-import wiki_stemmer
+
+import nltk
+nltk.download('stopwords')
 
 class ScrapGoogleSearchRetriever:
     """
@@ -52,7 +54,7 @@ class ApiGoogleSearchRetriever:
         # custom search engine ID, need to create on cloud shell
         self.CSE = "58eb65c4e6c2f7475"
         # API KEY for custom search
-        self.API_KEY = "AIzaSyCiaYwBU6fziCgkSkRFFO0hBKIfUevctrY"
+        self.API_KEY = ""
 
     def get_topk_docs_scores_merged(self, query):
         original_query = query
@@ -93,7 +95,8 @@ class ApiGoogleSearchRetriever:
             if len(paragraphs[title]) < 20:
                 continue
             top_docs.append(paragraphs[title])
-
+        if len(top_docs) < 5:
+           return top_docs, []
         r2 = TfidfRetriever(top_docs, len(top_docs), 4)
         top_docs, docs_scores = r2.get_topk_docs_scores(original_query)
         assert(len(top_docs) == len(docs_scores))
@@ -129,6 +132,9 @@ class ApiGoogleSearchRetriever:
                 for par in self.docs[title][:15]:
                     if len(par) >= 50:
                         top_docs.append(par)
+
+        if len(top_docs) < 5:
+            return top_docs, []
         r2 = TfidfRetriever(top_docs, len(top_docs), 4)
         top_docs, docs_scores = r2.get_topk_docs_scores(original_query)
         assert(len(top_docs) == len(docs_scores))
