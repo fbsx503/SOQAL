@@ -1,5 +1,5 @@
 import os
-from soqal import SOQAL
+
 import sys
 import pickle
 
@@ -8,10 +8,10 @@ from retriever.TfidfRetriever import *
 from retriever.GoogleSearchRetriever import *
 from retriever.CustomRetriever import *
 
-
 sys.path.append(os.path.abspath("bert"))
 from bert.Bert_model import BERT_model
 from bert.evaluate import *
+from soqal import SOQAL
 
 
 def accuracy_full_system(AI, dataset, args):
@@ -96,9 +96,8 @@ parser.add_argument('-g', '--google', help='use tf-idf or google', required=Fals
 parser.add_argument('-r', '--ret-path', help='Retriever Path', required=False, default='retriever/tfidfretriever.p')
 parser.add_argument('-rc', '--retCache', help='Retriever cache', required=False, default='t')
 parser.add_argument('-pm', '--pre-model', help='Preprocess model', required=False, default=None)
-parser.add_argument('-w', '--wiki-path', help='Wikipedia Path', required=False, default = 'f')
-parser.add_argument('-md', '--merged', help='merge docs', required=False, default = 't')
-
+parser.add_argument('-w', '--wiki-path', help='Wikipedia Path', required=False, default='f')
+parser.add_argument('-md', '--merged', help='merge docs', required=False, default='t')
 
 
 def main():
