@@ -8,6 +8,7 @@ import requests
 import json
 import urllib
 import time
+import wiki_stemmer
 
 class ScrapGoogleSearchRetriever:
     """
@@ -99,6 +100,7 @@ class ApiGoogleSearchRetriever:
         return top_docs, docs_scores
 
     def get_topk_docs_scores(self, query):
+        original_query = query  # Should be cleaned and stemmed
         query = urllib.parse.quote_plus(query)
         DATA = {}
         id = 0
