@@ -75,6 +75,36 @@ def get_big_context(retriever, dataset):
     with open("bigContext.json", "w") as f1:
         f1.write(json_string)
 
+def get_big_context_article(retriever, dataset):
+    with open(dataset) as f:
+        dataset = json.load(f)['data']
+    context_total = 0
+    context_found = 0
+    for article in dataset:
+        question_no = 0
+        quest = ''
+        context = ''
+        for paragraph in article['paragraphs']:
+            context = paragraph['context']
+            for qa in paragraph['qas']:
+                quest += qa['question']
+                context_total += 1
+                question_no += 1
+        docs = retriever.get_topk_docs(quest)
+        for doc in docs:
+            if doc.find(context) != -1:
+                for paragraph in article['paragraphs']:
+                    paragraph['context'] = doc
+                context_found += question_no
+                break
+        print("Found context so far: " + str(context_found))
+        print("Total Contexts So Far: " + str(context_total))
+    print("Found context " + str(context_found))
+    print("Total Contexts " + str(context_total))
+    json_string = json.dumps({'data' : dataset})
+    with open("bigContext.json", "w") as f1:
+        f1.write(json_string)
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-r', '--ret-path', help='Retriever Path', required=True)
@@ -92,7 +122,7 @@ def main():
     ret = CustomRetriever(base_r, wiki_data, 50, 10, args.merged)
     dataset_path = "../data/" + args.dataset_name
     print("Building big context ...")
-    get_big_context(ret, dataset_path)
+    get_big_context_article(ret, dataset_path)
 
 
 if __name__ == "__main__":
