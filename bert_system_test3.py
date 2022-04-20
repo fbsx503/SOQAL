@@ -85,7 +85,7 @@ def accuracy_full_system(AI, dataset):
 
 def accuracy_system(AI, args):
     dataset_path = "data/arcd-test.json"
-    accuracy_full_system(AI, dataset_path, args)
+    accuracy_full_system(AI, dataset_path)
 
 
 import argparse
