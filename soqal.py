@@ -380,22 +380,37 @@ class SOQAL:
         print("Retrieving Questions!")
         for article in dataset:
             for paragraph in article['paragraphs']:
-                for qa in paragraph['qas']:
-                    questions.append(qa['question'])
-                    ground_truth.append(qa['answers'][0]['text'])
+                if not args.ret_per_article:
+                    for qa in paragraph['qas']:
+                        questions.append(qa['question'])
+                        ground_truth.append(qa['answers'][0]['text'])
+                else:
+                    all_questions_per_article = []
+                    for qa in paragraph['qas']:
+                        all_questions_per_article.append(qa['question'])
+                        ground_truth.append(qa['answers'][0]['text'])
+                    for qa in all_questions_per_article:
+                        questions.append((qa, " ".join(all_questions_per_article).replace("؟", "").strip()))
         if args.retCache == 't': self.load_retriever_cache()
         for count, question in enumerate(questions):
+            cur_question = question[1] if args.ret_per_article else question
             print("Retrieving documents for question number {}".format(count))
+            print(cur_question)
             if args.retCache == 't':
-                docs, doc_scores = self.get_topk_docs_scores_cache(question)
+                docs, doc_scores = self.get_topk_docs_scores_cache(cur_question)
             else:
-                docs, doc_scores = self.retriever.get_topk_docs_scores(question)
+                docs, doc_scores = self.retriever.get_topk_docs_scores(cur_question)
             articles.append(docs)
             articles_scores.append(doc_scores)
+            if count == 5:
+                break
             assert len(docs) == len(doc_scores)
         print("Finished Retrieving documents")
         if args.retCache == 't': self.dumb_retirever_cache()
-        new_dataset = self.build_quest_json_full(questions, articles)
+        if not args.ret_per_article:
+            new_dataset = self.build_quest_json_full(questions, articles)
+        else:
+            new_dataset = self.build_quest_json_full([qa[0] for qa in questions], articles)
         print("Answering")
         answers_list = self.reader.predict_batch(new_dataset)
         print("Aggregating")
