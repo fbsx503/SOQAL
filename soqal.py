@@ -1,13 +1,13 @@
 import numpy as np
 import sys
-import pickle
 
 import pprint
 import os
 
+from retriever_cache import retriever_cache
+
 sys.path.append(os.path.abspath("araelectratf"))
 import os.path
-from retriever.CustomRetriever import *
 
 from bert.evaluate import *
 from araElectra.pytorch.QA import QA
@@ -25,13 +25,9 @@ class SOQAL:
         self.retriever = retriever
         self.beta = beta
         self.reader = reader
-        self.retriever_cache = {"changed": False}
-        if isinstance(retriever, CustomRetriever):
-            self.retriever_cache_path = 'retriever/docsCacheGoogle.txt'
-        else:
-            self.retriever_cache_path = 'retriever/docsCache.txt'
-        print(self.retriever_cache_path)
-        self.load_retriever_cache()
+        self.retriever_cache = retriever_cache(retriever)
+        
+        self.retriever_cache.load_retriever_cache()
         if preprocessor_model is not None:
             print("Using preprocessing for context/question")
             self.preprocessor = QA(preprocessor_model)
@@ -174,36 +170,6 @@ class SOQAL:
         for k in range(0, min(5, len(ans_indx))):
             pred.append(answers_text[ans_indx[k]])
         return pred
-
-    def get_topk_docs_scores_cache(self, question):
-        if question in self.retriever_cache:
-            return self.retriever_cache[question]
-        else:
-            docs, doc_scores = self.retriever.get_topk_docs_scores(question)
-            self.retriever_cache[question] = [docs, doc_scores]
-            self.retriever_cache["changed"] = True
-        return docs, doc_scores
-
-    def dumb_retirever_cache(self):
-        if self.retriever_cache["changed"] is True:
-            print("Saving retriever cache")
-            file = open(self.retriever_cache_path, 'wb+')
-            pickle.dump(self.retriever_cache, file)
-            file.close()
-            self.retriever_cache["changed"] = False
-            print("Cache Saved")
-
-    def load_retriever_cache(self):
-        print("Loading retrievr cache...")
-        if not os.path.exists(self.retriever_cache_path):
-            self.retriever_cache["changed"] = False
-            print("Cache file doesn't exist!")
-            return
-        dbfile = open(self.retriever_cache_path, 'rb')
-        self.retriever_cache = pickle.load(dbfile)
-        dbfile.close()
-        self.retriever_cache["changed"] = False
-        print("Cache Loaded")
 
     def build_quest_json_full_file(self, questions, list_docs):
         articles = []
@@ -391,20 +357,20 @@ class SOQAL:
                         ground_truth.append(qa['answers'][0]['text'])
                     for qa in all_questions_per_article:
                         questions.append((qa, " ".join(all_questions_per_article).replace("؟", "").strip()))
-        if args.retCache == 't': self.load_retriever_cache()
+        if args.retCache == 't': self.retriever_cache.load_retriever_cache()
         for count, question in enumerate(questions):
             cur_question = question[1] if args.ret_per_article else question
             print("Retrieving documents for question number {}".format(count))
             print(cur_question)
             if args.retCache == 't':
-                docs, doc_scores = self.get_topk_docs_scores_cache(cur_question)
+                docs, doc_scores = self.retriever_cache.get_topk_docs_scores_cache(cur_question)
             else:
                 docs, doc_scores = self.retriever.get_topk_docs_scores(cur_question)
             articles.append(docs)
             articles_scores.append(doc_scores)
             assert len(docs) == len(doc_scores)
         print("Finished Retrieving documents")
-        if args.retCache == 't': self.dumb_retirever_cache()
+        if args.retCache == 't': self.retriever_cache.dumb_retirever_cache()
         if not args.ret_per_article:
             new_dataset = self.build_quest_json_full(questions, articles)
         else:
