@@ -462,3 +462,17 @@ class SOQAL:
             answer_scores.append(result[0]['start_logit'] * result[0]['end_logit'])
         prediction = self.electra_agreggate(answers, answer_scores, doc_scores)
         return prediction
+
+
+    def get_articles(self, quest):
+        docs, doc_scores = self.retriever.get_topk_docs_scores(quest)
+        return docs, doc_scores
+
+    def ask_articles(self, quest, docs, doc_scores):
+        dataset = self.build_quest_json(quest, docs)
+        print("built documents json")
+        nbest = self.reader.predict_batch(dataset)
+        print("got predictions from BERT")
+        answers, answers_scores = self.get_predictions(nbest)
+        prediction = self.bert_agreggate(answers, answers_scores, doc_scores)
+        return prediction
