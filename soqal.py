@@ -402,8 +402,6 @@ class SOQAL:
                 docs, doc_scores = self.retriever.get_topk_docs_scores(cur_question)
             articles.append(docs)
             articles_scores.append(doc_scores)
-            if count == 5:
-                break
             assert len(docs) == len(doc_scores)
         print("Finished Retrieving documents")
         if args.retCache == 't': self.dumb_retirever_cache()
