@@ -38,7 +38,7 @@ parser.add_argument('-pm', '--pre-model', help='Preprocess model', required=Fals
 parser.add_argument('-w', '--wiki-path', help='Wikipedia Path', required=False, default='f')
 parser.add_argument('-md', '--merged', help='merge docs', required=False, default='t')
 parser.add_argument('-rpa', '--ret-per-article', help='Retriever documents per question or whole article',
-                    required=False, default='t')
+                    required=False, default=True)
 
 
 def main():
