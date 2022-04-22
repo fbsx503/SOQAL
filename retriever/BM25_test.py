@@ -1,15 +1,15 @@
 import json
-import random
-import pickle
-from BM25 import BM25
-import sys, os
-
-sys.path.append(os.path.abspath("../embedding"))
-import time
+from BM25 import *
 import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-r', '--ret-path', help='Retriever Path', required=True)
+
+
+def merge_questions(qas):
+    merged_questions = ""
+    for qa in qas:
+        merged_questions += " " + qa['question']
 
 
 def accuracy_retriever(retriever, dataset):
@@ -21,7 +21,8 @@ def accuracy_retriever(retriever, dataset):
         for paragraph in article['paragraphs']:
             for qa in paragraph['qas']:
                 for answer in qa['answers']:
-                    docs, _ = retriever.get_topk_docs_scores(qa['question'])
+                    print(clean_string(merge_questions(paragraph['qas'])))
+                    docs, _ = retriever.get_topk_docs_scores(merge_questions(paragraph['qas']))
                     for doc in docs:
                         if doc.find(answer['text']) != -1:
                             found_answers += 1
