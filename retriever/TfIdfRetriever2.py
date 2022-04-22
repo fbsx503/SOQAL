@@ -77,9 +77,9 @@ class HierarchicalRetriever:
         return Retriever(self.top_k_docs_2, docs, self.ngrams_2).get_topk_docs_scores(query)
 
 
-def build_tfidf(wiki_path, output_path, ngrams_2, top_k_1):
+def build_tfidf(wiki_path, output_path, ngrams_2, top_k_1, wiki_cleaned):
     wiki_data = pickle.load(open(wiki_path, "rb"))
-    stemmed_wiki = pickle.load(open("arwiki_cleaned.p", "rb"))
+    stemmed_wiki = pickle.load(open(wiki_cleaned, "rb"))
     r = Retriever(top_k_1, wiki_data, ngrams_2, stemmed_wiki)
     pickle.dump(r, open(output_path, "wb"))
 
@@ -87,9 +87,10 @@ def build_tfidf(wiki_path, output_path, ngrams_2, top_k_1):
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", "--ngrams", type=int, default=2, help="n-gram order")
 parser.add_argument("-k", "--topk", type=int, default=350, help="number of documents retriever should return")
-parser.add_argument('-w', '--wiki-path', help='Path of arwiki.p', default="arwiki.p")
+parser.add_argument('-w', '--wiki-path', help='Path of arwiki.p', default="arwiki_type_para.p")
+parser.add_argument('-wc', '--wiki-cleaned', help='Path of arwiki.p', default="arwiki_cleaned_type_para.p")
 parser.add_argument('-o', '--output-dir', help='Where to place the retrivers', default="tfidf_stem_retriever.p")
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    build_tfidf(args.wiki_path, args.output_dir, args.ngrams_2, args.topk)
+    build_tfidf(args.wiki_path, args.output_dir, args.ngrams, args.topk, args.wiki_cleaned)
