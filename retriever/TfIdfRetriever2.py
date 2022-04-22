@@ -11,8 +11,6 @@ tokenizer = WordPunctTokenizer()
 stemmer = ISRIStemmer()
 stopwords = set(stopwords.words('arabic'))
 SYMBOLS = set('!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\"')
-print(stopwords)
-print(SYMBOLS)
 
 
 def clean_string(doc):
