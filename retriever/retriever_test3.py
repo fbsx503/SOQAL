@@ -7,7 +7,7 @@ def merge_questions(qas):
     merged_questions = ""
     for qa in qas:
         merged_questions += " " + qa['question']
-
+    return merged_questions
 
 def accuracy_retriever(retriever, dataset):
     with open(dataset) as f:
