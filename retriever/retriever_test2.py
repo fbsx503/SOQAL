@@ -49,7 +49,7 @@ def accuracy_Hierarchial_TfidfRetriever(ret_path, docs, ngrams_1, ngrams_2):
                                                                                                  ngrams_2))
     r = pickle.load(open(ret_path, "rb"))
     dataset_path = "../data/arcd.json"
-    accuracy_retriever(HierarchicalTfidf(r, ngrams_1, ngrams_2, docs), dataset_path)
+    accuracy_retriever(HierarchicalTfidf(r, ngrams_2, docs), dataset_path)
 
 
 def main():
