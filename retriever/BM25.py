@@ -8,9 +8,7 @@ import argparse
 tokenizer = WordPunctTokenizer()
 stemmer = ISRIStemmer()
 stopwords = set(stopwords.words('arabic'))
-SYMBOLS = set('!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~\"')
-print(stopwords)
-print(SYMBOLS)
+SYMBOLS = set('!"#$%&\'()؟*+,-./:;<=>?@[\\]^_`{|}~\"')
 
 
 def clean_string(doc):
