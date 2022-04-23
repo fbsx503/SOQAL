@@ -3,11 +3,13 @@ from TfIdfRetriever2 import *
 import argparse
 
 
-def merge_questions(qas):
+def merge_questions(article):
     merged_questions = ""
-    for qa in qas:
-        merged_questions += " " + qa['question']
+    for paragraph in article:
+        for qa in paragraph['qas]']:
+            merged_questions += " " + qa['question']
     return merged_questions
+
 
 def accuracy_retriever(retriever, dataset):
     with open(dataset) as f:
@@ -18,8 +20,7 @@ def accuracy_retriever(retriever, dataset):
         for paragraph in article['paragraphs']:
             for qa in paragraph['qas']:
                 for answer in qa['answers']:
-                    print(clean_string(merge_questions(paragraph['qas'])))
-                    docs, _ = retriever.get_topk_docs_scores(merge_questions(paragraph['qas']))
+                    docs, _ = retriever.get_topk_docs_scores(merge_questions(article['paragraphs']))
                     for doc in docs:
                         if doc.find(answer['text']) != -1:
                             found_answers += 1
@@ -58,8 +59,8 @@ def main():
     args = parser.parse_args()
     print("Evaluating TF-IDF Retriever ...")
     accuracy_TfidfRetriever(args.ret_path)
-    accuracy_Hierarchial_TfidfRetriever(args.ret_path, 100, 1, 4)
     accuracy_Hierarchial_TfidfRetriever(args.ret_path, 50, 1, 4)
+    accuracy_Hierarchial_TfidfRetriever(args.ret_path, 15, 1, 4)
 
 
 if __name__ == "__main__":
