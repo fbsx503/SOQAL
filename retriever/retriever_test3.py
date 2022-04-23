@@ -6,7 +6,7 @@ import argparse
 def merge_questions(article):
     merged_questions = ""
     for paragraph in article:
-        for qa in paragraph['qas]']:
+        for qa in paragraph['qas']:
             merged_questions += " " + qa['question']
     return merged_questions
 
