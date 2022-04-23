@@ -345,21 +345,30 @@ class SOQAL:
         articles_scores = []
         print("Retrieving Questions!")
         for article in dataset:
+            all_questions_per_article = []
             for paragraph in article['paragraphs']:
-                if not args.ret_per_article:
+                if args.ret_per_article == 'single':
                     for qa in paragraph['qas']:
                         questions.append(qa['question'])
                         ground_truth.append(qa['answers'][0]['text'])
-                else:
-                    all_questions_per_article = []
+                elif args.ret_per_article == 'paragraph':
+                    all_questions_per_paragraph = []
+                    for qa in paragraph['qas']:
+                        all_questions_per_paragraph.append(qa['question'])
+                        ground_truth.append(qa['answers'][0]['text'])
+                    for qa in all_questions_per_paragraph:
+                        questions.append((qa, " ".join(all_questions_per_paragraph).replace("؟", "").strip()))
+                elif args.ret_per_article == 'article':
                     for qa in paragraph['qas']:
                         all_questions_per_article.append(qa['question'])
                         ground_truth.append(qa['answers'][0]['text'])
-                    for qa in all_questions_per_article:
-                        questions.append((qa, " ".join(all_questions_per_article).replace("؟", "").strip()))
+            if args.ret_per_article == 'article':
+                for qa in all_questions_per_article:
+                    questions.append((qa, " ".join(all_questions_per_article).replace("؟", "").strip()))
+
         if args.retCache == 't': self.retriever_cache.load_retriever_cache()
         for count, question in enumerate(questions):
-            cur_question = question[1] if args.ret_per_article else question
+            cur_question = question[1] if args.ret_per_article == 'paragraph' or args.ret_per_article == 'article' else question
             print("Retrieving documents for question number {}".format(count))
             print(cur_question)
             if args.retCache == 't':
@@ -371,10 +380,11 @@ class SOQAL:
             assert len(docs) == len(doc_scores)
         print("Finished Retrieving documents")
         if args.retCache == 't': self.retriever_cache.dumb_retirever_cache()
-        if not args.ret_per_article:
+        if args.ret_per_article == 'single':
             new_dataset = self.build_quest_json_full(questions, articles)
         else:
             new_dataset = self.build_quest_json_full([qa[0] for qa in questions], articles)
+
         print("Answering")
         answers_list = self.reader.predict_batch(new_dataset)
         print("Aggregating")
