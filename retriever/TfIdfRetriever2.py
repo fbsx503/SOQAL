@@ -7,17 +7,16 @@ from sklearn.metrics.pairwise import linear_kernel
 import pickle
 import argparse
 
-tokenizer = WordPunctTokenizer()
-stemmer = ISRIStemmer()
-stopwords = set(stopwords.words('arabic'))
-SYMBOLS = set('!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|؟}~\"')
-
 
 def clean_string(doc):
+    tokenizer = WordPunctTokenizer()
+    stemmer = ISRIStemmer()
+    cur_stopwords = set(stopwords.words('arabic'))
+    symbols = set('!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|؟}~\"')
     doc_tokens = tokenizer.tokenize(doc)
     cleaned_tokens = []
     for token in doc_tokens:
-        if token in stopwords or token in SYMBOLS:
+        if token in cur_stopwords or token in symbols:
             continue
         cleaned_tokens.append(stemmer.stem(token))
     return " ".join(cleaned_tokens)
@@ -27,9 +26,6 @@ def stem_all_docs(docs):
     cleaned_docs = []
     for (i, doc) in enumerate(docs):
         cleaned_docs.append(clean_string(doc))
-        if (i % 40000) == 0:
-            print("Finished {:.2f}".format(100.00 * i / len(docs)))
-    print("Finished Cleaning")
     return cleaned_docs
 
 
@@ -44,7 +40,6 @@ class Retriever:
         self.vectorizer = TfidfVectorizer(ngram_range=(1, ngrams_2), norm=None, stop_words=stopwords,
                                           lowercase=False)
         self.tfidf_matrix = self.vectorizer.fit_transform(self.docs_stemmed)
-        print("Finished TFIDF fit-transform")
 
     def get_topk_docs_scores(self, query):
         query = clean_string(query)
