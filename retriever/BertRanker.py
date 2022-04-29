@@ -11,9 +11,15 @@ class BertRanker:
 
 
     def rank(self, question , article):
-        result = len(article.split())
-        if result > 490:
-            return 1000000000
+        words = article.split()
+        result = len(words)
+        new_article = ''
+        if result > 485:
+            for i in range(484):
+                new_article += words[i]
+                new_article += ' '
+            new_article += words[485]
+        article = new_article
         inputs = self.tokenizer(article, return_tensors="pt")
         with self.tokenizer.as_target_tokenizer():
             labels = self.tokenizer(question, return_tensors="pt")
