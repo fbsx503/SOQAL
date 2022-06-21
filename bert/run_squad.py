@@ -29,9 +29,11 @@ import tokenization
 import six
 import tensorflow as tf
 
-flags=tf.compat.v1.flags.FLAGS
-
-#FLAGS = flags.FLAGS
+flags=tf.compat.v1.flags
+#flags = tf.flags
+#flags=flags
+#.Flag
+FLAGS = flags.FLAGS
 
 ## Required parameters
 flags.DEFINE_string(
